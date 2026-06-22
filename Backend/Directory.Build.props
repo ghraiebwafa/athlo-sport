@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Pin EF to match installed dotnet-ef tools (9.0.8) -->
+    <EntityFrameworkVersion>9.0.8</EntityFrameworkVersion>
+  </PropertyGroup>
+</Project>

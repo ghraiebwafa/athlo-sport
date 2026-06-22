@@ -1,0 +1,697 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/wafa/applications/Athlo_sport/Backend/Tests/Athlo.IntegrationTests/Athlo.IntegrationTests.csproj": {}
+  },
+  "projects": {
+    "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj",
+        "projectName": "Athlo.Shared",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "DotNetEnv": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "FluentValidation.DependencyInjectionExtensions": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[9.0.11, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[7.2.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj",
+        "projectName": "Athlo.Database",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "DotNetEnv": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Relational": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.Extensions.Configuration.EnvironmentVariables": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[9.0.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj",
+        "projectName": "Athlo.Mapper",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj",
+        "projectName": "Athlo.Models",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj",
+        "projectName": "Athlo.Repositories",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Models/Athlo.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/Athlo.AuthService.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/Athlo.AuthService.csproj",
+        "projectName": "Athlo.AuthService",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/Athlo.AuthService.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "FluentValidation.DependencyInjectionExtensions": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.14.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/Athlo.ManagementService.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/Athlo.ManagementService.csproj",
+        "projectName": "Athlo.ManagementService",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/Athlo.ManagementService.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Athlo.Shared/Athlo.Shared.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Mapper/Athlo.Mapper.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Repositories/Athlo.Repositories.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "FluentValidation.DependencyInjectionExtensions": {
+              "target": "Package",
+              "version": "[11.11.0, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.11, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/wafa/applications/Athlo_sport/Backend/Tests/Athlo.IntegrationTests/Athlo.IntegrationTests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/wafa/applications/Athlo_sport/Backend/Tests/Athlo.IntegrationTests/Athlo.IntegrationTests.csproj",
+        "projectName": "Athlo.IntegrationTests",
+        "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Tests/Athlo.IntegrationTests/Athlo.IntegrationTests.csproj",
+        "packagesPath": "/tmp/cursor-sandbox-cache/82b4ae89e723ac94eea07daa5db801d3/nuget",
+        "outputPath": "/home/wafa/applications/Athlo_sport/Backend/Tests/Athlo.IntegrationTests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/wafa/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/DataAccess/Athlo.Database/Athlo.Database.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/Athlo.AuthService.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.AuthService/Athlo.AuthService.csproj"
+              },
+              "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/Athlo.ManagementService.csproj": {
+                "projectPath": "/home/wafa/applications/Athlo_sport/Backend/Services/Athlo.ManagementService/Athlo.ManagementService.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Mvc.Testing": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.12.0, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.2, )"
+            },
+            "xunit.runner.visualstudio": {
+              "target": "Package",
+              "version": "[2.8.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/wafa/.dotnet/sdk/9.0.308/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

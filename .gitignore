@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# Backend (.NET)
+backend/**/bin/
+backend/**/obj/
+backend/**/appsettings.*.local.json
+backend/**/secrets.json
+
+# Mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/.idea/
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+.env
+.env.*

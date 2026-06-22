@@ -1,0 +1,103 @@
+export type FitnessGoal = 'LoseWeight' | 'BuildMuscle' | 'StayActive';
+export type UserRole = 'User' | 'Admin' | 'SuperAdmin';
+export type WorkoutDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+export type WorkoutSessionStatus = 'InProgress' | 'Completed' | 'Cancelled';
+
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  currentWeight: number;
+  goalWeight: number;
+  fitnessGoal: FitnessGoal;
+  role: UserRole;
+  goalProgressPercent: number;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  user: UserProfile;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  programCount: number;
+}
+
+export interface ProgramListItem {
+  id: string;
+  name: string;
+  description: string;
+  durationMinutes: number;
+  difficulty: WorkoutDifficulty;
+  estimatedCalories: number;
+  imageUrl?: string;
+  isFeatured: boolean;
+  categoryName: string;
+  exerciseCount: number;
+}
+
+export interface ProgramExercise {
+  id: string;
+  exerciseId: string;
+  name: string;
+  orderIndex: number;
+  sets: number;
+  reps: number;
+  durationSeconds?: number;
+  imageUrl?: string;
+}
+
+export interface ProgramDetail extends Omit<ProgramListItem, 'exerciseCount' | 'isFeatured' | 'categoryName'> {
+  categoryName: string;
+  exercises: ProgramExercise[];
+}
+
+export interface WorkoutSession {
+  id: string;
+  programId: string;
+  programName: string;
+  startedAt: string;
+  completedAt?: string;
+  caloriesBurned?: number;
+  status: WorkoutSessionStatus;
+  durationMinutes?: number;
+}
+
+export interface ProgressData {
+  totalWorkouts: number;
+  totalCaloriesBurned: number;
+  currentStreak: number;
+  personalBests: number;
+  goalProgressPercent: number;
+  currentWeight: number;
+  goalWeight: number;
+  weeklyFrequency: { weekStart: string; workoutCount: number }[];
+  recentWorkouts: {
+    sessionId: string;
+    programName: string;
+    completedAt: string;
+    caloriesBurned: number;
+    durationMinutes: number;
+  }[];
+}
+
+export interface ApiErrorDetail {
+  field: string;
+  message: string;
+}
+
+export interface ApiErrorResponse {
+  api: {
+    error: {
+      code: string;
+      message: string;
+      details?: ApiErrorDetail[];
+    };
+  };
+}

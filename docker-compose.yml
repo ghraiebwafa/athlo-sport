@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: athlo-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-athlo}
+      POSTGRES_USER: ${POSTGRES_USER:-athlo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    # No host port — auth/management reach postgres on the internal Docker network.
+    # To expose Postgres for local `dotnet run`, use: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d postgres
+    volumes:
+      - athlo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-athlo} -d ${POSTGRES_DB:-athlo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: ./Backend
+      dockerfile: Services/Athlo.AuthService/Dockerfile
+    container_name: athlo-auth
+    env_file:
+      - .env
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-athlo};Username=${POSTGRES_USER:-athlo};Password=${POSTGRES_PASSWORD}
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  management-service:
+    build:
+      context: ./Backend
+      dockerfile: Services/Athlo.ManagementService/Dockerfile
+    container_name: athlo-management
+    env_file:
+      - .env
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-athlo};Username=${POSTGRES_USER:-athlo};Password=${POSTGRES_PASSWORD}
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  athlo_pgdata:

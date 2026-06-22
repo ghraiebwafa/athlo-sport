@@ -1,0 +1,48 @@
+import { authApi } from '@/lib/api/client';
+import type { AuthResponse, FitnessGoal, UserProfile } from '@/lib/types';
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  fitnessGoal: FitnessGoal;
+  currentWeight: number;
+  goalWeight: number;
+}
+
+export async function login(payload: LoginPayload) {
+  const { data } = await authApi.post<AuthResponse>('/api/auth/login', payload);
+  return data;
+}
+
+export async function register(payload: RegisterPayload) {
+  const { data } = await authApi.post<AuthResponse>('/api/auth/register', payload);
+  return data;
+}
+
+export async function getProfile() {
+  const { data } = await authApi.get<UserProfile>('/api/auth/profile');
+  return data;
+}
+
+export async function forgotPassword(email: string) {
+  const { data } = await authApi.post<{ message: string; resetToken?: string }>(
+    '/api/auth/forgot-password',
+    { email }
+  );
+  return data;
+}
+
+export async function resetPassword(token: string, newPassword: string, confirmNewPassword: string) {
+  await authApi.post('/api/auth/reset-password', { token, newPassword, confirmNewPassword });
+}
+
+export async function logout(refreshToken: string) {
+  await authApi.post('/api/auth/logout', { refreshToken });
+}
