@@ -1,3 +1,4 @@
+using Athlo.AuthService.Background;
 using Athlo.AuthService.Services;
 using Athlo.AuthService.Validators;
 using Athlo.Database;
@@ -6,6 +7,7 @@ using AuthServiceImpl = Athlo.AuthService.Services.AuthService;
 using Athlo.Database.Seed;
 using Athlo.Repositories;
 using Athlo.Shared.Extensions;
+using Athlo.Shared.Security;
 using Athlo.Shared.Settings;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -22,8 +24,10 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddAthloApiDefaults(Configuration);
         services.AddAthloSwagger("Athlo Auth API");
         services.AddAthloCors(Configuration);
-        services.AddAthloHealthChecks();
         services.AddAthloRateLimiting();
+        services.AddMemoryCache();
+        services.AddSingleton<LoginAttemptLimiter>();
+        services.AddAthloTokenCleanup();
         services.AddAthloDatabase(Configuration);
         services.AddAthloRepositories();
         services.AddAthloJwtAuthentication(Configuration);
