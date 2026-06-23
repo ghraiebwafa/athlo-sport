@@ -9,4 +9,5 @@ public interface IRefreshTokenRepository
     Task RevokeAsync(RefreshToken token, CancellationToken ct = default);
     Task<bool> TryRevokeIfActiveAsync(Guid tokenId, CancellationToken ct = default);
     Task RevokeAllForUserAsync(Guid userId, CancellationToken ct = default);
+    Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default);
 }

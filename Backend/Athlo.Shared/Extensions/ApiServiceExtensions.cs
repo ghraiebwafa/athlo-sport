@@ -29,5 +29,13 @@ public static class ApiServiceExtensions
         var superAdminPassword = configuration["SuperAdmin:Password"];
         if (string.IsNullOrWhiteSpace(superAdminPassword) || superAdminPassword.Length < 12)
             throw new InvalidOperationException("SuperAdmin:Password must be at least 12 characters.");
+
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production";
+        var isDevOrTest = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(environment, "Testing", StringComparison.OrdinalIgnoreCase);
+        var smtpHost = configuration["Smtp:Host"];
+        if (!isDevOrTest && string.IsNullOrWhiteSpace(smtpHost))
+            throw new InvalidOperationException(
+                "Smtp:Host must be configured in production so password reset emails can be sent.");
     }
 }

@@ -12,6 +12,7 @@ using Athlo.Shared.Email;
 using Athlo.Shared.Exceptions;
 using Athlo.Shared.Security;
 using Athlo.Shared.Settings;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Athlo.AuthService.Services;
@@ -25,7 +26,9 @@ public class AuthService(
     IOptions<JwtSettings> jwtOptions,
     IOptions<SuperAdminSettings> superAdminOptions,
     IEmailSender emailSender,
-    IWebHostEnvironment environment) : IAuthService
+    IWebHostEnvironment environment,
+    IConfiguration configuration,
+    LoginAttemptLimiter loginAttemptLimiter) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtOptions.Value;
     private readonly string _superAdminEmail = superAdminOptions.Value.Email.Trim().ToLowerInvariant();
@@ -61,12 +64,17 @@ public class AuthService(
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
-        var user = await userRepository.GetByEmailAsync(request.Email.Trim(), ct)
-            ?? throw new UnauthorizedException("Invalid email or password.");
+        var email = request.Email.Trim().ToLowerInvariant();
+        loginAttemptLimiter.EnsureNotBlocked(email);
 
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var user = await userRepository.GetByEmailAsync(email, ct);
+        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            loginAttemptLimiter.RecordFailure(email);
             throw new UnauthorizedException("Invalid email or password.");
+        }
 
+        loginAttemptLimiter.Reset(email);
         return await CreateAuthResponseAsync(user, ct);
     }
 
@@ -188,7 +196,8 @@ public class AuthService(
 
         await emailSender.SendPasswordResetEmailAsync(user.Email, tokenValue, ct);
 
-        if (environment.IsDevelopment())
+        var exposeToken = configuration.GetValue("Auth:ExposeResetTokenInResponse", false);
+        if (environment.IsDevelopment() && exposeToken)
             response.ResetToken = tokenValue;
 
         return response;

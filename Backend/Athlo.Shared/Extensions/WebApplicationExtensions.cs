@@ -32,9 +32,6 @@ public static class WebApplicationExtensions
         return services;
     }
 
-    public static IServiceCollection AddAthloHealthChecks(this IServiceCollection services) =>
-        services;
-
     public static WebApplication MapAthloHealthChecks(this WebApplication app)
     {
         app.MapHealthChecks("/health");

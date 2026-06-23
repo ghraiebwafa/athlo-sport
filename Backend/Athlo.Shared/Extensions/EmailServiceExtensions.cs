@@ -18,10 +18,11 @@ public static class EmailServiceExtensions
 
         if (!string.IsNullOrWhiteSpace(smtpHost))
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
-        else if (environment.IsDevelopment())
+        else if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
             services.AddSingleton<IEmailSender, LoggingEmailSender>();
         else
-            services.AddSingleton<IEmailSender, NoOpEmailSender>();
+            throw new InvalidOperationException(
+                "Smtp:Host must be configured in production so password reset emails can be sent.");
 
         return services;
     }

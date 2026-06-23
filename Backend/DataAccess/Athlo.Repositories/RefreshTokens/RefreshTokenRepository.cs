@@ -39,4 +39,9 @@ public class RefreshTokenRepository(AthloDbContext context) : IRefreshTokenRepos
         foreach (var token in tokens)
             token.RevokedAt = DateTime.UtcNow;
     }
+
+    public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default) =>
+        await context.RefreshTokens
+            .Where(t => t.ExpiresAt < olderThan || (t.RevokedAt != null && t.RevokedAt < olderThan))
+            .ExecuteDeleteAsync(ct);
 }
