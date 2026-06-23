@@ -14,6 +14,7 @@ import { register } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
 import { validateRegisterForm } from '@/lib/validateRegister';
 import type { FitnessGoal } from '@/lib/types';
+import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function RegisterScreen() {
@@ -71,7 +72,7 @@ export default function RegisterScreen() {
         expiresAt: data.expiresAt,
         user: data.user,
       });
-      router.replace('/(tabs)');
+      router.replace(ROUTES.home);
     } catch (err) {
       const parsed = parseApiError(err);
       setError(parsed.message);

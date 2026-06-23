@@ -1,5 +1,6 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ROUTES } from '@/lib/routes';
 import { theme } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -20,7 +21,7 @@ export function GuestGuard({ children }: GuestGuardProps) {
   }
 
   if (isAuthenticated) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href={ROUTES.home} />;
   }
 
   return <>{children}</>;

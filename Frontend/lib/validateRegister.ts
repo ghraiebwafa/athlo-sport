@@ -1,3 +1,5 @@
+import { validateEmail, validatePassword } from '@/lib/validatePassword';
+
 export interface RegisterFormValues {
   fullName: string;
   email: string;
@@ -16,20 +18,15 @@ export interface RegisterValidationResult {
 export function validateRegisterForm(values: RegisterFormValues): RegisterValidationResult {
   const fieldErrors: Record<string, string> = {};
   const fullName = values.fullName.trim();
-  const email = values.email.trim();
 
   if (!fullName) fieldErrors.fullName = 'Full name is required.';
   else if (fullName.length > 100) fieldErrors.fullName = 'Full name must be 100 characters or fewer.';
 
-  if (!email) fieldErrors.email = 'Email is required.';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fieldErrors.email = 'Enter a valid email address.';
+  const emailResult = validateEmail(values.email);
+  if (!emailResult.ok) fieldErrors.email = emailResult.message;
 
-  if (!values.password) fieldErrors.password = 'Password is required.';
-  else {
-    if (values.password.length < 8) fieldErrors.password = 'Password must be at least 8 characters.';
-    else if (!/[A-Z]/.test(values.password)) fieldErrors.password = 'Password must contain an uppercase letter.';
-    else if (!/[0-9]/.test(values.password)) fieldErrors.password = 'Password must contain a number.';
-  }
+  const passwordResult = validatePassword(values.password);
+  if (!passwordResult.ok) fieldErrors.password = passwordResult.message;
 
   if (!values.confirmPassword) fieldErrors.confirmPassword = 'Please confirm your password.';
   else if (values.confirmPassword !== values.password) fieldErrors.confirmPassword = 'Passwords do not match.';

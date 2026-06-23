@@ -10,6 +10,7 @@ import { images } from '@/constants/images';
 import { theme } from '@/constants/theme';
 import { forgotPassword, resetPassword } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
+import { validateEmail, validatePassword } from '@/lib/validatePassword';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -33,11 +34,17 @@ export default function ForgotPasswordScreen() {
       setFieldErrors({ email: 'Email is required.' });
       return;
     }
+    const emailResult = validateEmail(email);
+    if (!emailResult.ok) {
+      setError(emailResult.message);
+      setFieldErrors({ email: emailResult.message });
+      return;
+    }
 
     setLoading(true);
     try {
       const data = await forgotPassword(email.trim());
-      if (data.resetToken) setToken(data.resetToken);
+      if (__DEV__ && data.resetToken) setToken(data.resetToken);
       Alert.alert('Check your email', data.message);
       setStep('reset');
     } catch (err) {
@@ -55,10 +62,12 @@ export default function ForgotPasswordScreen() {
     const nextFieldErrors: Record<string, string> = {};
 
     if (!token.trim()) nextFieldErrors.token = 'Reset token is required.';
-    if (!newPassword) nextFieldErrors.newPassword = 'New password is required.';
-    else if (newPassword.length < 8) nextFieldErrors.newPassword = 'Password must be at least 8 characters.';
-    if (!confirmPassword) nextFieldErrors.confirmNewPassword = 'Please confirm your password.';
-    else if (confirmPassword !== newPassword) nextFieldErrors.confirmNewPassword = 'Passwords do not match.';
+
+    const passwordResult = validatePassword(newPassword);
+    if (!passwordResult.ok) nextFieldErrors.newPassword = passwordResult.message;
+
+    if (!confirmPassword) nextFieldErrors.confirmPassword = 'Please confirm your password.';
+    else if (confirmPassword !== newPassword) nextFieldErrors.confirmPassword = 'Passwords do not match.';
 
     if (Object.keys(nextFieldErrors).length > 0) {
       setFieldErrors(nextFieldErrors);
@@ -132,12 +141,12 @@ export default function ForgotPasswordScreen() {
               value={confirmPassword}
               onChangeText={(v) => {
                 setConfirmPassword(v);
-                clearField('confirmNewPassword');
+                clearField('confirmPassword');
               }}
               secureTextEntry
               secureToggle
               autoComplete="new-password"
-              error={fieldErrors.confirmNewPassword}
+              error={fieldErrors.confirmPassword}
             />
             <FormErrorBanner message={error} />
             <Button title="Reset Password" onPress={handleReset} loading={loading} />

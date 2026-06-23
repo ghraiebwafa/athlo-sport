@@ -12,6 +12,8 @@ import { images } from '@/constants/images';
 import { theme } from '@/constants/theme';
 import { login } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
+import { validateEmail } from '@/lib/validatePassword';
+import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function LoginScreen() {
@@ -31,6 +33,12 @@ export default function LoginScreen() {
       setFieldErrors({ email: 'Email is required.' });
       return;
     }
+    const emailResult = validateEmail(email);
+    if (!emailResult.ok) {
+      setError(emailResult.message);
+      setFieldErrors({ email: emailResult.message });
+      return;
+    }
     if (!password) {
       setError('Please enter your password.');
       setFieldErrors({ password: 'Password is required.' });
@@ -46,7 +54,7 @@ export default function LoginScreen() {
         expiresAt: data.expiresAt,
         user: data.user,
       });
-      router.replace('/(tabs)');
+      router.replace(ROUTES.home);
     } catch (err) {
       const parsed = parseApiError(err);
       setError(parsed.message);

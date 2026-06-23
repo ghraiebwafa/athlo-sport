@@ -6,19 +6,11 @@ import { clearTokens, setTokens } from '@/stores/authStore';
 
 const REFRESH_BUFFER_MS = 60_000;
 
-export async function refreshSessionIfNeeded(session: AuthTokens): Promise<AuthTokens | null> {
-  if (!session.refreshToken) return null;
-
-  const expiresAt = new Date(session.expiresAt);
-  if (Number.isNaN(expiresAt.getTime())) return null;
-
-  if (expiresAt.getTime() - Date.now() > REFRESH_BUFFER_MS) {
-    return session;
-  }
-
+/** Refresh tokens via the auth API and persist the new session. */
+export async function performTokenRefresh(refreshToken: string): Promise<AuthTokens | null> {
   try {
     const { data } = await axios.post<AuthResponse>(`${config.authApiUrl}/api/auth/refresh`, {
-      refreshToken: session.refreshToken,
+      refreshToken,
     });
     const refreshed: AuthTokens = {
       accessToken: data.accessToken,
@@ -32,4 +24,23 @@ export async function refreshSessionIfNeeded(session: AuthTokens): Promise<AuthT
     await clearTokens();
     return null;
   }
+}
+
+export async function refreshSessionIfNeeded(session: AuthTokens): Promise<AuthTokens | null> {
+  if (!session.refreshToken) {
+    await clearTokens();
+    return null;
+  }
+
+  const expiresAt = new Date(session.expiresAt);
+  if (Number.isNaN(expiresAt.getTime())) {
+    await clearTokens();
+    return null;
+  }
+
+  if (expiresAt.getTime() - Date.now() > REFRESH_BUFFER_MS) {
+    return session;
+  }
+
+  return performTokenRefresh(session.refreshToken);
 }

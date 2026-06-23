@@ -1,5 +1,6 @@
 import { getItem, removeItem, setItem } from '@/lib/storage';
 import { refreshSessionIfNeeded } from '@/lib/authRefresh';
+import { parseStoredSession } from '@/lib/parseStoredSession';
 import { create } from 'zustand';
 import type { UserProfile } from '@/lib/types';
 
@@ -55,8 +56,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      const session = JSON.parse(raw) as AuthTokens;
-      if (!session.accessToken || !session.refreshToken || !session.expiresAt) {
+      const session = parseStoredSession(raw);
+      if (!session) {
         await removeItem(STORAGE_KEY);
         cachedTokens = null;
         set({ isLoading: false, isAuthenticated: false, user: null });
@@ -72,13 +73,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       cachedTokens = activeSession;
       set({ user: activeSession.user, isAuthenticated: true, isLoading: false });
     } catch {
+      await removeItem(STORAGE_KEY);
+      cachedTokens = null;
       set({ isLoading: false, isAuthenticated: false, user: null });
     }
   },
 
   setSession: async (session) => {
     await setTokens(session);
-    set({ user: session.user, isAuthenticated: true, isLoading: false });
   },
 
   clearSession: async () => {

@@ -1,8 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { handleUnauthorized, isAuthEndpoint } from '@/lib/authSession';
+import { performTokenRefresh } from '@/lib/authRefresh';
 import { config } from '@/lib/config';
-import type { AuthResponse } from '@/lib/types';
-import { getTokens, setTokens, clearTokens } from '@/stores/authStore';
+import { getTokens } from '@/stores/authStore';
 
 export { getApiErrorMessage, parseApiError } from '@/lib/api/errors';
 export type { ParsedApiError } from '@/lib/api/errors';
@@ -43,23 +43,8 @@ function processQueue(token: string | null) {
 async function refreshAccessToken(): Promise<string | null> {
   const tokens = getTokens();
   if (!tokens?.refreshToken) return null;
-
-  try {
-    const { data } = await axios.post<AuthResponse>(
-      `${config.authApiUrl}/api/auth/refresh`,
-      { refreshToken: tokens.refreshToken }
-    );
-    await setTokens({
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-      expiresAt: data.expiresAt,
-      user: data.user,
-    });
-    return data.accessToken;
-  } catch {
-    await clearTokens();
-    return null;
-  }
+  const refreshed = await performTokenRefresh(tokens.refreshToken);
+  return refreshed?.accessToken ?? null;
 }
 
 function setupRefreshInterceptor(instance: typeof authApi) {

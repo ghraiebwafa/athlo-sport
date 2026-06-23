@@ -3,6 +3,15 @@ import { useAuthStore } from '@/stores/authStore';
 
 let redirecting = false;
 
+const AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+] as const;
+
 /** Clears tokens and sends the user to login after session expiry. */
 export async function handleUnauthorized() {
   if (redirecting) return;
@@ -17,11 +26,10 @@ export async function handleUnauthorized() {
 
 export function isAuthEndpoint(url?: string): boolean {
   if (!url) return false;
-  return (
-    url.includes('/api/auth/login') ||
-    url.includes('/api/auth/register') ||
-    url.includes('/api/auth/refresh') ||
-    url.includes('/api/auth/forgot-password') ||
-    url.includes('/api/auth/reset-password')
-  );
+  try {
+    const path = new URL(url, 'http://athlo.local').pathname;
+    return AUTH_PATHS.some((authPath) => path === authPath || path.endsWith(authPath));
+  } catch {
+    return AUTH_PATHS.some((authPath) => url.includes(authPath));
+  }
 }

@@ -18,8 +18,16 @@ function fieldErrorsFromDetails(details?: { field: string; message: string }[]) 
   return fieldErrors;
 }
 
+function isDevEnvironment(): boolean {
+  if (typeof __DEV__ !== 'undefined') return __DEV__;
+  return process.env.NODE_ENV !== 'production';
+}
+
 function networkMessage(): string {
-  return `Cannot reach the server. Start the backend from the project root (\`docker compose up -d\`), then confirm Auth API is up at ${config.authApiUrl}.`;
+  if (isDevEnvironment()) {
+    return `Cannot reach the server. Start the backend (\`docker compose up -d\`) and confirm the API is up at ${config.authApiUrl}.`;
+  }
+  return 'Cannot reach the server. Check your connection and try again.';
 }
 
 function statusFallback(status: number): string {
