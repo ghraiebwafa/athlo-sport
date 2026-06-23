@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { BarChart3, Dumbbell, Trophy } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AthloLogo } from '@/components/brand/AthloLogo';
 import { FeatureCard } from '@/components/onboarding/FeatureCard';
 import { Button } from '@/components/ui/Button';
@@ -8,13 +8,15 @@ import { Screen } from '@/components/ui/Screen';
 import { theme } from '@/constants/theme';
 import { webPhoneFrame } from '@/lib/layout';
 import { setOnboardingComplete } from '@/lib/onboarding';
+import { ROUTES } from '@/lib/routes';
+import { useAuthStore } from '@/stores/authStore';
 
 async function finishOnboarding(path: '/(auth)/register' | '/(auth)/login') {
   await setOnboardingComplete();
   router.replace(path);
 }
 
-export default function OnboardingScreen() {
+function OnboardingContent() {
   return (
     <Screen scroll contentStyle={styles.content}>
       <Pressable style={styles.skip} onPress={() => finishOnboarding('/(auth)/login')}>
@@ -61,7 +63,32 @@ export default function OnboardingScreen() {
   );
 }
 
+export default function OnboardingScreen() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={theme.colors.primary} size="large" />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href={ROUTES.home} />;
+  }
+
+  return <OnboardingContent />;
+}
+
 const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background,
+  },
   content: { paddingTop: theme.spacing.md, paddingBottom: theme.spacing.xl, ...webPhoneFrame },
   skip: { alignSelf: 'flex-end', marginBottom: theme.spacing.md },
   skipText: { color: theme.colors.primary, fontWeight: '600', fontSize: 16 },

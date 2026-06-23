@@ -18,14 +18,28 @@ import {
 import { getPrograms } from '@/lib/api/programs';
 import { getProgress } from '@/lib/api/progress';
 import { getActiveWorkout } from '@/lib/api/workouts';
+import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const progressQuery = useQuery({ queryKey: ['progress'], queryFn: getProgress });
-  const programsQuery = useQuery({ queryKey: ['programs'], queryFn: getPrograms });
-  const activeQuery = useQuery({ queryKey: ['activeWorkout'], queryFn: getActiveWorkout });
+  const progressQuery = useQuery({
+    queryKey: ['progress'],
+    queryFn: getProgress,
+    enabled: isAuthenticated,
+  });
+  const programsQuery = useQuery({
+    queryKey: ['programs'],
+    queryFn: getPrograms,
+    enabled: isAuthenticated,
+  });
+  const activeQuery = useQuery({
+    queryKey: ['activeWorkout'],
+    queryFn: getActiveWorkout,
+    enabled: isAuthenticated,
+  });
 
   const isLoading = progressQuery.isLoading || programsQuery.isLoading;
 
@@ -47,7 +61,15 @@ export default function HomeScreen() {
     );
   }
 
-  const progress = progressQuery.data!;
+  const progress = progressQuery.data;
+  if (!progress) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.error}>Unable to load your dashboard.</Text>
+      </View>
+    );
+  }
+
   const programs = programsQuery.data ?? [];
   const featured = programs.find((p) => p.isFeatured) ?? programs[0];
   const upcoming = programs.find((p) => p.id !== featured?.id) ?? programs[1];
@@ -64,7 +86,7 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.date}>{formatLongDate()}</Text>
         </View>
-        <Pressable style={styles.avatar} onPress={() => router.push('/(tabs)/profile')}>
+        <Pressable style={styles.avatar} onPress={() => router.push(ROUTES.profile)}>
           <Text style={styles.avatarText}>
             {(user?.fullName ?? 'A').charAt(0).toUpperCase()}
           </Text>
@@ -82,8 +104,8 @@ export default function HomeScreen() {
         <StatTile
           icon={Footprints}
           iconColor={theme.colors.primary}
-          label="Steps Today"
-          value="—"
+          label="Steps"
+          value="N/A"
         />
         <StatTile
           icon={Trophy}
@@ -95,7 +117,10 @@ export default function HomeScreen() {
       </View>
 
       {featured ? (
-        <TodayWorkoutCard program={featured} activeWorkout={activeQuery.data} />
+        <TodayWorkoutCard
+          program={featured}
+          activeWorkout={activeQuery.isError ? null : activeQuery.data}
+        />
       ) : null}
 
       <WeeklyGoalCard completed={weekCount} />

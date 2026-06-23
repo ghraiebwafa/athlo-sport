@@ -22,6 +22,7 @@ import { PersonalRecordsSection } from '@/components/profile/PersonalRecordsSect
 import { SettingsMenu, showComingSoon } from '@/components/profile/SettingsMenu';
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
 import { theme } from '@/constants/theme';
+import { ROUTES } from '@/lib/routes';
 import { getProfile, logout } from '@/lib/api/auth';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getProgress } from '@/lib/api/progress';
@@ -77,7 +78,7 @@ export default function ProfileScreen() {
       return;
     }
     if (id === 'history') {
-      router.push('/(tabs)/progress');
+      router.push(ROUTES.progress);
       return;
     }
     const labels: Record<string, string> = {

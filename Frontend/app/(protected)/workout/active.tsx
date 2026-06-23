@@ -19,7 +19,6 @@ import { WorkoutControls } from '@/components/workout/WorkoutControls';
 import { WorkoutProgressBar } from '@/components/workout/WorkoutProgressBar';
 import { WorkoutStatChip } from '@/components/workout/WorkoutStatChip';
 import { Button } from '@/components/ui/Button';
-import { AuthGuard } from '@/components/auth/AuthGuard';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getProgram } from '@/lib/api/programs';
@@ -33,17 +32,10 @@ import {
   formatMmSs,
 } from '@/lib/workoutTimer';
 import { cancelWorkout, completeWorkout, getActiveWorkout } from '@/lib/api/workouts';
+import { ROUTES } from '@/lib/routes';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
 
 export default function ActiveWorkoutScreen() {
-  return (
-    <AuthGuard>
-      <ActiveWorkoutContent />
-    </AuthGuard>
-  );
-}
-
-function ActiveWorkoutContent() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const setSummary = useWorkoutCompleteStore((s) => s.setSummary);
@@ -88,7 +80,7 @@ function ActiveWorkoutContent() {
         exercises,
         completedAt: data.completedAt ?? new Date().toISOString(),
       });
-      router.replace('/workout/complete');
+      router.replace(ROUTES.completeWorkout);
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
@@ -97,7 +89,7 @@ function ActiveWorkoutContent() {
     mutationFn: () => cancelWorkout(session!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
-      router.replace('/(tabs)');
+      router.replace(ROUTES.home);
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
@@ -190,7 +182,7 @@ function ActiveWorkoutContent() {
     return (
       <View style={styles.centered}>
         <Text style={styles.empty}>No active workout.</Text>
-        <Button title="Browse Programs" onPress={() => router.replace('/(tabs)/programs')} />
+        <Button title="Browse Programs" onPress={() => router.replace(ROUTES.programs)} />
       </View>
     );
   }
@@ -198,7 +190,7 @@ function ActiveWorkoutContent() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => router.replace(ROUTES.home)} hitSlop={8}>
           <ChevronLeft color={theme.colors.text} size={26} />
         </Pressable>
         <Text style={styles.headerTitle}>Active Workout</Text>
@@ -218,7 +210,7 @@ function ActiveWorkoutContent() {
             iconColor={theme.colors.red}
             value={String(metrics.heartRate)}
             unit="BPM"
-            label="Heart Rate"
+            label="Heart Rate (est.)"
             valueColor={theme.colors.red}
           />
           <WorkoutStatChip
@@ -226,14 +218,14 @@ function ActiveWorkoutContent() {
             iconColor={theme.colors.orange}
             value={String(metrics.calories)}
             unit="kcal"
-            label="Calories Burned"
+            label="Calories (est.)"
             valueColor={theme.colors.orange}
           />
           <WorkoutStatChip
             icon={Activity}
             iconColor={theme.colors.green}
             value={`${metrics.intensity}%`}
-            label="Intensity"
+            label="Intensity (est.)"
             valueColor={theme.colors.green}
           />
           <WorkoutStatChip

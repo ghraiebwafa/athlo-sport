@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ExerciseListItem } from '@/components/program/ExerciseListItem';
 import { ProgramActions } from '@/components/program/ProgramActions';
 import { ProgramHero } from '@/components/program/ProgramHero';
@@ -10,19 +9,14 @@ import { ProgramStatsRow } from '@/components/program/ProgramStatsRow';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getProgram } from '@/lib/api/programs';
+import { normalizeRouteParam } from '@/lib/routeParams';
+import { ROUTES } from '@/lib/routes';
 import { isProgramSaved, toggleSavedProgram } from '@/lib/savedPrograms';
 import { getActiveWorkout, startWorkout } from '@/lib/api/workouts';
 
 export default function ProgramDetailScreen() {
-  return (
-    <AuthGuard>
-      <ProgramDetailContent />
-    </AuthGuard>
-  );
-}
-
-function ProgramDetailContent() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
+  const id = normalizeRouteParam(rawId);
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
 
@@ -40,7 +34,7 @@ function ProgramDetailContent() {
     mutationFn: () => startWorkout(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
-      router.push('/workout/active');
+      router.push(ROUTES.activeWorkout);
     },
     onError: (err) => Alert.alert('Could not start workout', getApiErrorMessage(err)),
   });
@@ -51,7 +45,7 @@ function ProgramDetailContent() {
       if (active) {
         Alert.alert('Active workout', 'You already have a workout in progress.', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Resume', onPress: () => router.push('/workout/active') },
+          { text: 'Resume', onPress: () => router.push(ROUTES.activeWorkout) },
         ]);
         return;
       }
@@ -67,6 +61,14 @@ function ProgramDetailContent() {
     setSaved(next);
     Alert.alert(next ? 'Saved' : 'Removed', next ? 'Program saved for later.' : 'Program removed from saved.');
   };
+
+  if (!id) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.error}>Program not found.</Text>
+      </View>
+    );
+  }
 
   if (programQuery.isLoading) {
     return (

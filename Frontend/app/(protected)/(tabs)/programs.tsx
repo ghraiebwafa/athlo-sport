@@ -15,6 +15,7 @@ import { FeaturedProgramCard } from '@/components/programs/FeaturedProgramCard';
 import { PopularWorkoutRow } from '@/components/programs/PopularWorkoutRow';
 import { SearchBar } from '@/components/programs/SearchBar';
 import { theme } from '@/constants/theme';
+import { ROUTES } from '@/lib/routes';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getCategories, getPrograms } from '@/lib/api/programs';
 import { getActiveWorkout } from '@/lib/api/workouts';
@@ -81,7 +82,7 @@ export default function ProgramsScreen() {
       </View>
 
       {active ? (
-        <Pressable style={styles.activeBanner} onPress={() => router.push('/workout/active')}>
+        <Pressable style={styles.activeBanner} onPress={() => router.push(ROUTES.activeWorkout)}>
           <Text style={styles.activeTitle}>Workout in progress</Text>
           <Text style={styles.activeSubtitle}>{active.programName}</Text>
         </Pressable>

@@ -7,22 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CompletedExerciseRow } from '@/components/workout/CompletedExerciseRow';
 import { SummaryStat } from '@/components/workout/SummaryStat';
 import { Button } from '@/components/ui/Button';
-import { AuthGuard } from '@/components/auth/AuthGuard';
 import { theme } from '@/constants/theme';
 import { formatHms } from '@/lib/workoutTimer';
 import { firstName } from '@/lib/format';
 import { useAuthStore } from '@/stores/authStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
+import { ROUTES } from '@/lib/routes';
 
 export default function WorkoutCompleteScreen() {
-  return (
-    <AuthGuard>
-      <WorkoutCompleteContent />
-    </AuthGuard>
-  );
-}
-
-function WorkoutCompleteContent() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const summary = useWorkoutCompleteStore((s) => s.summary);
@@ -51,20 +43,20 @@ function WorkoutCompleteContent() {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.empty}>No workout summary available.</Text>
-        <Button title="Go Home" onPress={() => router.replace('/(tabs)')} />
+        <Button title="Go Home" onPress={() => router.replace(ROUTES.home)} />
       </View>
     );
   }
 
   const handleDone = () => {
     void clearSummary();
-    router.replace('/(tabs)');
+    router.replace(ROUTES.home);
   };
 
   const handleHistory = () => {
     void clearSummary();
     queryClient.invalidateQueries({ queryKey: ['progress'] });
-    router.replace('/(tabs)/progress');
+    router.replace(ROUTES.progress);
   };
 
   const handleShare = async () => {

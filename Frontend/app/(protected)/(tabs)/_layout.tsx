@@ -1,12 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Dumbbell, Home, LineChart, User } from 'lucide-react-native';
-import { AuthGuard } from '@/components/auth/AuthGuard';
 import { theme } from '@/constants/theme';
 
 export default function TabLayout() {
   return (
-    <AuthGuard>
-      <Tabs
+    <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
@@ -52,6 +50,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-    </AuthGuard>
   );
 }

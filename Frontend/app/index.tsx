@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SplashView } from '@/components/brand/SplashView';
 import { hasCompletedOnboarding } from '@/lib/onboarding';
+import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function Index() {
@@ -21,5 +22,5 @@ export default function Index() {
     return <Redirect href="/onboarding" />;
   }
 
-  return isAuthenticated ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/login" />;
+  return isAuthenticated ? <Redirect href={ROUTES.home} /> : <Redirect href={ROUTES.login} />;
 }
