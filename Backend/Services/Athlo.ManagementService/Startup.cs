@@ -1,8 +1,10 @@
 using Athlo.Database;
+using Athlo.Database.DbContexts;
 using Athlo.ManagementService.Services;
 using Athlo.ManagementService.Validators;
 using Athlo.Repositories;
 using Athlo.Shared.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Athlo.ManagementService;
 
@@ -16,7 +18,6 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddAthloApiDefaults(Configuration);
         services.AddAthloSwagger("Athlo Management API");
         services.AddAthloCors(Configuration);
-        services.AddAthloHealthChecks();
         services.AddAthloRateLimiting();
         services.AddAthloDatabase(Configuration);
         services.AddAthloRepositories();
@@ -27,6 +28,27 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddScoped<IExerciseService, ExerciseService>();
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IProgressService, ProgressService>();
+        services.AddScoped<IAdminStatsService, AdminStatsService>();
+    }
+
+    public async Task InitializeAsync(WebApplication app)
+    {
+        if (Environment.IsEnvironment("Testing"))
+            return;
+
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AthloDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied.");
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Fatal(ex, "Database migration failed");
+            throw;
+        }
     }
 
     public void Configure(WebApplication app)

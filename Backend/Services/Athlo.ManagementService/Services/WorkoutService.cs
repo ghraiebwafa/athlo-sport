@@ -62,7 +62,7 @@ public class WorkoutService(
             ?? throw new NotFoundException("Workout session not found.");
 
         if (session.UserId != userId)
-            throw new UnauthorizedException("You do not have access to this workout session.");
+            throw new ForbiddenException("You do not have access to this workout session.");
 
         if (session.Status != WorkoutSessionStatus.InProgress)
             throw new ConflictException(GetInactiveSessionMessage(session.Status));
@@ -88,7 +88,7 @@ public class WorkoutService(
             ?? throw new NotFoundException("Workout session not found.");
 
         if (session.UserId != userId)
-            throw new UnauthorizedException("You do not have access to this workout session.");
+            throw new ForbiddenException("You do not have access to this workout session.");
 
         if (session.Status != WorkoutSessionStatus.InProgress)
             throw new ConflictException(GetInactiveSessionMessage(session.Status));
