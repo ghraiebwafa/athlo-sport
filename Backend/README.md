@@ -40,6 +40,14 @@ Super admin can manage other admins:
 
 Admin management endpoints require the `SuperAdmin` role.
 
+## Dashboard stats (Management API)
+
+Super admins can fetch platform stats from the Management API:
+
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| `GET` | `/api/admin/stats` | SuperAdmin |
+
 ## User management (Auth API)
 
 Admins and super admins can browse registered users:
