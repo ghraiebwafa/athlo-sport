@@ -1,30 +1,48 @@
-# Environment & secrets
+# Environment
 .env
 .env.local
 .env.*.local
 **/.env
 !**/.env.example
 
-# Backend (.NET)
-backend/**/bin/
-backend/**/obj/
-backend/**/appsettings.*.local.json
-backend/**/secrets.json
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+*.nupkg
+*.snupkg
 
-# Mobile
-mobile/node_modules/
-mobile/.expo/
-mobile/dist/
-mobile/web-build/
-mobile/.idea/
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
 
-# IDE
-.idea/
-
-# OS
+# OS / IDE
 .DS_Store
 Thumbs.db
-.env
-.env.*
-Frontend/node_modules/
-node_modules/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Logs & coverage
+*.log
+coverage/
+TestResults/
+
+# Docker
+docker-compose.override.yml
+
