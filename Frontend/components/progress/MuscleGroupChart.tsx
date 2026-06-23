@@ -23,8 +23,10 @@ export function MuscleGroupChart({ data, mostTrained }: MuscleGroupChartProps) {
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <Text style={styles.title}>Muscle Group Focus</Text>
-        <Text style={styles.link}>View Details</Text>
+        <View>
+          <Text style={styles.title}>Muscle Group Focus</Text>
+          <Text style={styles.estimate}>Estimated from workout names</Text>
+        </View>
       </View>
       <View style={styles.body}>
         <View style={styles.chartWrap}>
@@ -86,9 +88,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     marginBottom: theme.spacing.lg,
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.md },
+  header: { marginBottom: theme.spacing.md },
   title: { color: theme.colors.text, fontWeight: '700', fontSize: 16 },
-  link: { color: theme.colors.primary, fontWeight: '600', fontSize: 13 },
+  estimate: { color: theme.colors.textMuted, fontSize: 11, fontWeight: '500' },
   body: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' },
   chartWrap: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },
   centerLabel: { position: 'absolute', alignItems: 'center', width: 90 },

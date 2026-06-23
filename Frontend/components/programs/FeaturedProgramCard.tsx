@@ -3,6 +3,7 @@ import { Calendar, Dumbbell, Signal, Star } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/constants/theme';
+import { programDetail } from '@/lib/routes';
 import type { ProgramListItem } from '@/lib/types';
 
 interface FeaturedProgramCardProps {
@@ -43,7 +44,7 @@ export function FeaturedProgramCard({ program }: FeaturedProgramCardProps) {
           </View>
         </View>
       </View>
-      <Button title="View Program" onPress={() => router.push(`/program/${program.id}`)} />
+      <Button title="View Program" onPress={() => router.push(programDetail(program.id))} />
     </View>
   );
 }

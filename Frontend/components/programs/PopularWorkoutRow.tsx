@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { ChevronRight, Clock, Dumbbell } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
+import { programDetail } from '@/lib/routes';
 import type { ProgramListItem } from '@/lib/types';
 
 interface PopularWorkoutRowProps {
@@ -12,7 +13,7 @@ export function PopularWorkoutRow({ program }: PopularWorkoutRowProps) {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-      onPress={() => router.push(`/program/${program.id}`)}
+      onPress={() => router.push(programDetail(program.id))}
     >
       {program.imageUrl ? (
         <Image source={{ uri: program.imageUrl }} style={styles.thumb} />

@@ -3,6 +3,7 @@ import { Clock, Dumbbell } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/constants/theme';
+import { programDetail, ROUTES } from '@/lib/routes';
 import type { ProgramListItem, WorkoutSession } from '@/lib/types';
 
 interface TodayWorkoutCardProps {
@@ -13,10 +14,10 @@ interface TodayWorkoutCardProps {
 export function TodayWorkoutCard({ program, activeWorkout }: TodayWorkoutCardProps) {
   const handleStart = () => {
     if (activeWorkout) {
-      router.push('/workout/active');
+      router.push(ROUTES.activeWorkout);
       return;
     }
-    router.push(`/program/${program.id}`);
+    router.push(programDetail(program.id));
   };
 
   return (

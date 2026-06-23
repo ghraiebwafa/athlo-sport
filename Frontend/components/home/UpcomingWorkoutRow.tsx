@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Calendar, ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
+import { programDetail } from '@/lib/routes';
 import type { ProgramListItem } from '@/lib/types';
 
 interface UpcomingWorkoutRowProps {
@@ -12,7 +13,7 @@ export function UpcomingWorkoutRow({ program }: UpcomingWorkoutRowProps) {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-      onPress={() => router.push(`/program/${program.id}`)}
+      onPress={() => router.push(programDetail(program.id))}
     >
       <View style={styles.iconWrap}>
         <Calendar color={theme.colors.primary} size={20} />
