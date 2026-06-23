@@ -3,11 +3,8 @@ using Athlo.Models.DTOs.Admin;
 using Athlo.Models.DTOs.Workouts;
 using Athlo.Models.Entities;
 using Athlo.Repositories;
-using Athlo.Repositories.Exercises;
-using Athlo.Repositories.Programs;
 using Athlo.Repositories.RefreshTokens;
 using Athlo.Repositories.Users;
-using Athlo.Repositories.Workouts;
 using Athlo.Shared.Enums;
 using Athlo.Shared.Exceptions;
 using Athlo.Shared.Settings;
@@ -17,9 +14,6 @@ namespace Athlo.AuthService.Services;
 
 public class AdminService(
     IUserRepository userRepository,
-    IProgramRepository programRepository,
-    IExerciseRepository exerciseRepository,
-    IWorkoutSessionRepository workoutSessionRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IUnitOfWork unitOfWork,
     IOptions<SuperAdminSettings> superAdminOptions) : IAdminService
@@ -100,21 +94,5 @@ public class AdminService(
             ?? throw new NotFoundException("User not found.");
 
         return AdminMapper.ToDetail(user);
-    }
-
-    public async Task<AdminDashboardStatsDto> GetDashboardStatsAsync(CancellationToken ct = default)
-    {
-        var adminCount = await userRepository.CountAsync(UserRole.Admin, ct)
-            + await userRepository.CountAsync(UserRole.SuperAdmin, ct);
-
-        return new AdminDashboardStatsDto
-        {
-            TotalUsers = await userRepository.CountAsync(ct: ct),
-            TotalAdmins = adminCount,
-            TotalPrograms = await programRepository.CountAsync(ct),
-            TotalExercises = await exerciseRepository.CountAsync(ct),
-            CompletedWorkoutsToday = await workoutSessionRepository.CountCompletedTodayAsync(ct),
-            ActiveWorkoutsNow = await workoutSessionRepository.CountActiveAsync(ct)
-        };
     }
 }

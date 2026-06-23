@@ -40,10 +40,4 @@ public class AdminController(
         await adminService.RemoveAdminAsync(id, ct);
         return NoContent();
     }
-
-    [HttpGet("stats")]
-    public async Task<ActionResult<AdminDashboardStatsDto>> GetStats(CancellationToken ct)
-    {
-        return Ok(await adminService.GetDashboardStatsAsync(ct));
-    }
 }
