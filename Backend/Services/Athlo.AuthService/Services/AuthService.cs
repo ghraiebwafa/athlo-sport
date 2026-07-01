@@ -65,10 +65,14 @@ public class AuthService(
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
         var email = request.Email.Trim().ToLowerInvariant();
+        var user = await userRepository.GetByEmailAsync(email, ct);
+
+        if (user is null)
+            throw new UnauthorizedException("Invalid email or password.");
+
         loginAttemptLimiter.EnsureNotBlocked(email);
 
-        var user = await userRepository.GetByEmailAsync(email, ct);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             loginAttemptLimiter.RecordFailure(email);
             throw new UnauthorizedException("Invalid email or password.");

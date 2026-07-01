@@ -23,6 +23,20 @@ public class RefreshTokenRepository(AthloDbContext context) : IRefreshTokenRepos
 
     public async Task<bool> TryRevokeIfActiveAsync(Guid tokenId, CancellationToken ct = default)
     {
+        if (!context.Database.IsRelational())
+        {
+            var token = await context.RefreshTokens
+                .FirstOrDefaultAsync(
+                    t => t.Id == tokenId && t.RevokedAt == null && t.ExpiresAt > DateTime.UtcNow,
+                    ct);
+            if (token is null)
+                return false;
+
+            token.RevokedAt = DateTime.UtcNow;
+            context.RefreshTokens.Update(token);
+            return true;
+        }
+
         var updated = await context.RefreshTokens
             .Where(t => t.Id == tokenId && t.RevokedAt == null && t.ExpiresAt > DateTime.UtcNow)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), ct);
@@ -40,8 +54,19 @@ public class RefreshTokenRepository(AthloDbContext context) : IRefreshTokenRepos
             token.RevokedAt = DateTime.UtcNow;
     }
 
-    public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default) =>
-        await context.RefreshTokens
+    public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default)
+    {
+        if (!context.Database.IsRelational())
+        {
+            var expired = await context.RefreshTokens
+                .Where(t => t.ExpiresAt < olderThan || (t.RevokedAt != null && t.RevokedAt < olderThan))
+                .ToListAsync(ct);
+            context.RefreshTokens.RemoveRange(expired);
+            return expired.Count;
+        }
+
+        return await context.RefreshTokens
             .Where(t => t.ExpiresAt < olderThan || (t.RevokedAt != null && t.RevokedAt < olderThan))
             .ExecuteDeleteAsync(ct);
+    }
 }

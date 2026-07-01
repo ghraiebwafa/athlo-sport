@@ -31,8 +31,19 @@ public class PasswordResetTokenRepository(AthloDbContext context) : IPasswordRes
             token.UsedAt = DateTime.UtcNow;
     }
 
-    public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default) =>
-        await context.PasswordResetTokens
+    public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default)
+    {
+        if (!context.Database.IsRelational())
+        {
+            var expired = await context.PasswordResetTokens
+                .Where(t => t.ExpiresAt < olderThan || (t.UsedAt != null && t.UsedAt < olderThan))
+                .ToListAsync(ct);
+            context.PasswordResetTokens.RemoveRange(expired);
+            return expired.Count;
+        }
+
+        return await context.PasswordResetTokens
             .Where(t => t.ExpiresAt < olderThan || (t.UsedAt != null && t.UsedAt < olderThan))
             .ExecuteDeleteAsync(ct);
+    }
 }

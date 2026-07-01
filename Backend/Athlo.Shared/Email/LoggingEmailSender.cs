@@ -8,9 +8,8 @@ public class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSend
     public Task SendPasswordResetEmailAsync(string toEmail, string resetToken, CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Password reset requested for {Email}. Token (dev only): {ResetToken}",
-            toEmail,
-            resetToken);
+            "Password reset requested for {Email}. Check application logs policy for token delivery in dev.",
+            toEmail);
 
         return Task.CompletedTask;
     }
