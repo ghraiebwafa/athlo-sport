@@ -7,6 +7,8 @@ export const ROUTES = {
   profile: '/(protected)/(tabs)/profile' as Href,
   login: '/(auth)/login' as Href,
   register: '/(auth)/register' as Href,
+  forgotPassword: '/(auth)/forgot-password' as Href,
+  onboarding: '/onboarding' as Href,
   activeWorkout: '/(protected)/workout/active' as Href,
   completeWorkout: '/(protected)/workout/complete' as Href,
 } as const;

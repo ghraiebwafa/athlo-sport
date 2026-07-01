@@ -42,6 +42,10 @@ describe('parseStoredSession', () => {
           email: 'user@test.local',
           fullName: 'User',
           role: 'User',
+          currentWeight: 70,
+          goalWeight: 65,
+          fitnessGoal: 'LoseWeight',
+          goalProgressPercent: 0,
         },
       })
     );

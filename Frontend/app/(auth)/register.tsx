@@ -13,7 +13,7 @@ import { theme } from '@/constants/theme';
 import { register } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
 import { validateRegisterForm } from '@/lib/validateRegister';
-import type { FitnessGoal } from '@/lib/types';
+import { ROUTES } from '@/lib/routes';
 import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -85,7 +85,7 @@ export default function RegisterScreen() {
   return (
     <BackgroundScreen source={images.bgAuth} overlayOpacity={0.58} scroll contentStyle={styles.content}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
-        <AuthHeader backFallback="/(auth)/login" />
+        <AuthHeader backFallback={ROUTES.login} />
 
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Let&apos;s build your fitness journey together.</Text>
@@ -165,7 +165,7 @@ export default function RegisterScreen() {
           <Button title="Create Account" onPress={handleRegister} loading={loading} />
           <Text style={styles.footer}>
             Already have an account?{' '}
-            <Link href="/(auth)/login" style={styles.footerLink}>Sign In</Link>
+            <Link href={ROUTES.login} style={styles.footerLink}>Sign In</Link>
           </Text>
         </View>
       </KeyboardAvoidingView>

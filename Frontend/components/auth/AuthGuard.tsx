@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { theme } from '@/constants/theme';
+import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 interface AuthGuardProps {
@@ -20,7 +21,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
+    return <Redirect href={ROUTES.login} />;
   }
 
   return <>{children}</>;

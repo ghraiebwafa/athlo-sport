@@ -10,6 +10,7 @@ import { images } from '@/constants/images';
 import { theme } from '@/constants/theme';
 import { forgotPassword, resetPassword } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
+import { ROUTES } from '@/lib/routes';
 import { validateEmail, validatePassword } from '@/lib/validatePassword';
 
 export default function ForgotPasswordScreen() {
@@ -79,7 +80,7 @@ export default function ForgotPasswordScreen() {
     try {
       await resetPassword(token.trim(), newPassword, confirmPassword);
       Alert.alert('Success', 'Password updated. You can sign in now.');
-      router.replace('/(auth)/login');
+      router.replace(ROUTES.login);
     } catch (err) {
       const parsed = parseApiError(err);
       setError(parsed.message);
@@ -92,7 +93,7 @@ export default function ForgotPasswordScreen() {
   return (
     <BackgroundScreen source={images.bgAuth} overlayOpacity={0.58} scroll contentStyle={styles.content}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
-        <AuthHeader backFallback="/(auth)/login" />
+        <AuthHeader backFallback={ROUTES.login} />
 
         <Text style={styles.title}>{step === 'request' ? 'Forgot Password' : 'Reset Password'}</Text>
         {step === 'request' ? (

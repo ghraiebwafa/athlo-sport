@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { handleUnauthorized, isAuthEndpoint } from '@/lib/authSession';
-import { performTokenRefresh } from '@/lib/authRefresh';
+import { refreshAccessTokenLocked } from '@/lib/authRefresh';
 import { config } from '@/lib/config';
 import { getTokens } from '@/stores/authStore';
 
@@ -43,7 +43,7 @@ function processQueue(token: string | null) {
 async function refreshAccessToken(): Promise<string | null> {
   const tokens = getTokens();
   if (!tokens?.refreshToken) return null;
-  const refreshed = await performTokenRefresh(tokens.refreshToken);
+  const refreshed = await refreshAccessTokenLocked(tokens.refreshToken);
   return refreshed?.accessToken ?? null;
 }
 

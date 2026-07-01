@@ -6,8 +6,10 @@ import { clearTokens, setTokens } from '@/stores/authStore';
 
 const REFRESH_BUFFER_MS = 60_000;
 
+let inFlightRefresh: Promise<AuthTokens | null> | null = null;
+
 /** Refresh tokens via the auth API and persist the new session. */
-export async function performTokenRefresh(refreshToken: string): Promise<AuthTokens | null> {
+async function performTokenRefresh(refreshToken: string): Promise<AuthTokens | null> {
   try {
     const { data } = await axios.post<AuthResponse>(`${config.authApiUrl}/api/auth/refresh`, {
       refreshToken,
@@ -26,6 +28,21 @@ export async function performTokenRefresh(refreshToken: string): Promise<AuthTok
   }
 }
 
+/**
+ * Single-flight refresh shared by app hydrate and API interceptors.
+ * Prevents concurrent refresh requests from invalidating rotated tokens.
+ */
+export function refreshAccessTokenLocked(refreshToken: string): Promise<AuthTokens | null> {
+  if (!refreshToken) return Promise.resolve(null);
+
+  if (inFlightRefresh) return inFlightRefresh;
+
+  inFlightRefresh = performTokenRefresh(refreshToken).finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
+}
+
 export async function refreshSessionIfNeeded(session: AuthTokens): Promise<AuthTokens | null> {
   if (!session.refreshToken) {
     await clearTokens();
@@ -42,5 +59,5 @@ export async function refreshSessionIfNeeded(session: AuthTokens): Promise<AuthT
     return session;
   }
 
-  return performTokenRefresh(session.refreshToken);
+  return refreshAccessTokenLocked(session.refreshToken);
 }

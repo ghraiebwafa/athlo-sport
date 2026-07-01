@@ -145,6 +145,18 @@ export default function ActiveWorkoutScreen() {
     }
   };
 
+  const handleBack = () => {
+    Alert.alert('Leave workout?', 'Your session is still active.', [
+      { text: 'Stay', style: 'cancel' },
+      { text: 'Keep workout', onPress: () => router.replace(ROUTES.home) },
+      {
+        text: 'Discard',
+        style: 'destructive',
+        onPress: () => cancelMutation.mutate(),
+      },
+    ]);
+  };
+
   const handleEnd = () => {
     if (!metrics || !session) return;
     Alert.alert('End workout', 'Complete this session?', [
@@ -190,7 +202,7 @@ export default function ActiveWorkoutScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.replace(ROUTES.home)} hitSlop={8}>
+        <Pressable onPress={handleBack} hitSlop={8}>
           <ChevronLeft color={theme.colors.text} size={26} />
         </Pressable>
         <Text style={styles.headerTitle}>Active Workout</Text>

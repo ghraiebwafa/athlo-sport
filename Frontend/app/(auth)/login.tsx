@@ -100,7 +100,7 @@ export default function LoginScreen() {
               icon={Lock}
               error={fieldErrors.password}
             />
-            <Link href="/(auth)/forgot-password" asChild>
+            <Link href={ROUTES.forgotPassword} asChild>
               <Pressable style={styles.forgot}>
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
@@ -111,7 +111,7 @@ export default function LoginScreen() {
           <SocialLogin />
           <Text style={styles.footer}>
             Don&apos;t have an account?{' '}
-            <Link href="/(auth)/register" style={styles.footerLink}>Create Account</Link>
+            <Link href={ROUTES.register} style={styles.footerLink}>Create Account</Link>
           </Text>
         </View>
       </KeyboardAvoidingView>

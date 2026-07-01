@@ -25,6 +25,7 @@ import { theme } from '@/constants/theme';
 import { ROUTES } from '@/lib/routes';
 import { getProfile, logout } from '@/lib/api/auth';
 import { getApiErrorMessage } from '@/lib/api/client';
+import { signOutAndRedirect } from '@/lib/authSession';
 import { getProgress } from '@/lib/api/progress';
 import { buildAchievements, buildPersonalRecords } from '@/lib/profileHelpers';
 import { getTokens, useAuthStore } from '@/stores/authStore';
@@ -41,7 +42,6 @@ const menuItems = [
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
-  const clearSession = useAuthStore((s) => s.clearSession);
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -65,8 +65,7 @@ export default function ProfileScreen() {
     } catch {
       // clear local session regardless
     }
-    await clearSession();
-    router.replace('/(auth)/login');
+    await signOutAndRedirect();
   };
 
   const handleMenu = (id: string) => {
