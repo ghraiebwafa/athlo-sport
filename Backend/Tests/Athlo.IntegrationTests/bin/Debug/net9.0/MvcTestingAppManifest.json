@@ -1,9 +1,0 @@
-{
-  "Athlo.AuthService, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/Services\/Athlo.AuthService",
-  "Athlo.Database, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/DataAccess\/Athlo.Database",
-  "Athlo.ManagementService, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/Services\/Athlo.ManagementService",
-  "Athlo.Mapper, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/DataAccess\/Athlo.Mapper",
-  "Athlo.Models, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/DataAccess\/Athlo.Models",
-  "Athlo.Repositories, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/DataAccess\/Athlo.Repositories",
-  "Athlo.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/wafa\/applications\/Athlo_sport\/Backend\/Athlo.Shared"
-}

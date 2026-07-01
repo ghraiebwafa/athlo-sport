@@ -16,6 +16,8 @@
 [Rr]elease/
 *.nupkg
 *.snupkg
+**/[Bb]in/
+**/[Oo]bj/
 
 # Node / Expo
 node_modules/
