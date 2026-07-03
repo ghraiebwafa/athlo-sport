@@ -42,6 +42,38 @@ public class WorkoutSessionRepository(AthloDbContext context) : IWorkoutSessionR
             .OrderByDescending(s => s.CompletedAt)
             .ToListAsync(ct);
 
+    public async Task<(int TotalCount, int TotalCalories)> GetCompletedAggregatesAsync(Guid userId, CancellationToken ct = default)
+    {
+        var result = await context.WorkoutSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId && s.Status == WorkoutSessionStatus.Completed)
+            .GroupBy(_ => 1)
+            .Select(g => new { Count = g.Count(), Calories = g.Sum(s => s.CaloriesBurned ?? 0) })
+            .FirstOrDefaultAsync(ct);
+
+        return result is null ? (0, 0) : (result.Count, result.Calories);
+    }
+
+    public async Task<IReadOnlyList<DateOnly>> GetCompletedDatesAsync(Guid userId, CancellationToken ct = default) =>
+        await context.WorkoutSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId && s.Status == WorkoutSessionStatus.Completed && s.CompletedAt != null)
+            .Select(s => DateOnly.FromDateTime(s.CompletedAt!.Value))
+            .Distinct()
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<(Guid ProgramId, int MaxCalories)>> GetMaxCaloriesPerProgramAsync(Guid userId, CancellationToken ct = default)
+    {
+        var results = await context.WorkoutSessions
+            .AsNoTracking()
+            .Where(s => s.UserId == userId && s.Status == WorkoutSessionStatus.Completed && s.CaloriesBurned != null)
+            .GroupBy(s => s.ProgramId)
+            .Select(g => new { ProgramId = g.Key, MaxCalories = g.Max(s => s.CaloriesBurned!.Value) })
+            .ToListAsync(ct);
+
+        return results.Select(r => (r.ProgramId, r.MaxCalories)).ToList();
+    }
+
     public Task<int> CountCompletedTodayAsync(CancellationToken ct = default)
     {
         var today = DateTime.UtcNow.Date;

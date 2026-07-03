@@ -1,4 +1,4 @@
-import { LucideIcon, TrendingUp } from 'lucide-react-native';
+import { LucideIcon, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 
@@ -11,6 +11,11 @@ interface OverviewCardProps {
 }
 
 export function OverviewCard({ icon: Icon, iconColor, value, label, trend }: OverviewCardProps) {
+  const isPositive = trend != null && trend >= 0;
+  const trendColor = isPositive ? theme.colors.green : theme.colors.red;
+  const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+  const arrow = isPositive ? '↗' : '↘';
+
   return (
     <View style={styles.card}>
       <Icon color={iconColor} size={18} />
@@ -18,8 +23,10 @@ export function OverviewCard({ icon: Icon, iconColor, value, label, trend }: Ove
       <Text style={styles.label}>{label}</Text>
       {trend != null ? (
         <View style={styles.trendRow}>
-          <TrendingUp color={theme.colors.green} size={12} />
-          <Text style={styles.trend}>↗ {Math.abs(trend)}% vs last period</Text>
+          <TrendIcon color={trendColor} size={12} />
+          <Text style={[styles.trend, { color: trendColor }]}>
+            {arrow} {Math.abs(trend)}% vs last period
+          </Text>
         </View>
       ) : null}
     </View>
@@ -40,5 +47,5 @@ const styles = StyleSheet.create({
   value: { color: theme.colors.text, fontSize: 20, fontWeight: '800', marginTop: 4 },
   label: { color: theme.colors.textMuted, fontSize: 12 },
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  trend: { color: theme.colors.green, fontSize: 10 },
+  trend: { fontSize: 10 },
 });

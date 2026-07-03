@@ -42,7 +42,7 @@ export default function ActiveWorkoutScreen() {
   const [now, setNow] = useState(Date.now());
   const [paused, setPaused] = useState(false);
   const pausedAtRef = useRef<number | null>(null);
-  const pausedTotalRef = useRef(0);
+  const [pausedTotal, setPausedTotal] = useState(0);
 
   const { data: session, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['activeWorkout'],
@@ -67,7 +67,7 @@ export default function ActiveWorkoutScreen() {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
       const exercises = programQuery.data?.exercises ?? [];
-      const elapsed = elapsedSeconds(session!.startedAt, now) - pausedTotalRef.current;
+      const elapsed = elapsedSeconds(session!.startedAt, now) - pausedTotal;
       void setSummary({
         sessionId: data.id,
         programName: data.programName,
@@ -96,7 +96,7 @@ export default function ActiveWorkoutScreen() {
 
   const metrics = useMemo(() => {
     if (!session) return null;
-    const elapsed = elapsedSeconds(session.startedAt, now) - pausedTotalRef.current;
+    const elapsed = elapsedSeconds(session.startedAt, now) - pausedTotal;
     const durationMin = programQuery.data?.durationMinutes ?? 30;
     const targetCal = programQuery.data?.estimatedCalories ?? 300;
     const totalSec = durationMin * 60;
@@ -135,7 +135,7 @@ export default function ActiveWorkoutScreen() {
   const togglePause = () => {
     if (paused) {
       if (pausedAtRef.current) {
-        pausedTotalRef.current += Math.floor((Date.now() - pausedAtRef.current) / 1000);
+        setPausedTotal((prev) => prev + Math.floor((Date.now() - pausedAtRef.current!) / 1000));
         pausedAtRef.current = null;
       }
       setPaused(false);

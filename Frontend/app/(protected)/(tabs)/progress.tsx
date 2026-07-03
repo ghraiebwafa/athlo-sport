@@ -130,7 +130,7 @@ export default function ProgressScreen() {
           <Text style={styles.sectionTitle}>Recent Workouts</Text>
           {filtered.recent.map((w) => (
             <View key={w.sessionId} style={styles.workoutRow}>
-              <View>
+              <View style={styles.workoutInfo}>
                 <Text style={styles.workoutName}>{w.programName}</Text>
                 <Text style={styles.workoutMeta}>
                   {new Date(w.completedAt).toLocaleDateString()} · {w.durationMinutes} min
@@ -195,6 +195,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  workoutInfo: { flex: 1 },
   workoutName: { color: theme.colors.text, fontWeight: '600' },
   workoutMeta: { color: theme.colors.textMuted, fontSize: 12, marginTop: 2 },
   workoutCal: { color: theme.colors.primary, fontWeight: '600' },

@@ -20,17 +20,24 @@ public class AdminStatsService(
 {
     public async Task<AdminDashboardStatsDto> GetDashboardStatsAsync(CancellationToken ct = default)
     {
-        var adminCount = await userRepository.CountAsync(UserRole.Admin, ct)
-            + await userRepository.CountAsync(UserRole.SuperAdmin, ct);
+        var usersTask = userRepository.CountAsync(ct: ct);
+        var adminsTask = userRepository.CountAsync(UserRole.Admin, ct);
+        var superAdminsTask = userRepository.CountAsync(UserRole.SuperAdmin, ct);
+        var programsTask = programRepository.CountAsync(ct);
+        var exercisesTask = exerciseRepository.CountAsync(ct);
+        var completedTodayTask = workoutSessionRepository.CountCompletedTodayAsync(ct);
+        var activeNowTask = workoutSessionRepository.CountActiveAsync(ct);
+
+        await Task.WhenAll(usersTask, adminsTask, superAdminsTask, programsTask, exercisesTask, completedTodayTask, activeNowTask);
 
         return new AdminDashboardStatsDto
         {
-            TotalUsers = await userRepository.CountAsync(ct: ct),
-            TotalAdmins = adminCount,
-            TotalPrograms = await programRepository.CountAsync(ct),
-            TotalExercises = await exerciseRepository.CountAsync(ct),
-            CompletedWorkoutsToday = await workoutSessionRepository.CountCompletedTodayAsync(ct),
-            ActiveWorkoutsNow = await workoutSessionRepository.CountActiveAsync(ct)
+            TotalUsers = usersTask.Result,
+            TotalAdmins = adminsTask.Result + superAdminsTask.Result,
+            TotalPrograms = programsTask.Result,
+            TotalExercises = exercisesTask.Result,
+            CompletedWorkoutsToday = completedTodayTask.Result,
+            ActiveWorkoutsNow = activeNowTask.Result
         };
     }
 }
