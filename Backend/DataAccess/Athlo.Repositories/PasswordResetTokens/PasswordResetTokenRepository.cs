@@ -39,6 +39,7 @@ public class PasswordResetTokenRepository(AthloDbContext context) : IPasswordRes
                 .Where(t => t.ExpiresAt < olderThan || (t.UsedAt != null && t.UsedAt < olderThan))
                 .ToListAsync(ct);
             context.PasswordResetTokens.RemoveRange(expired);
+            await context.SaveChangesAsync(ct);
             return expired.Count;
         }
 

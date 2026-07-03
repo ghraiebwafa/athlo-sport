@@ -12,6 +12,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Password).AthloUserPassword();
         RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords do not match.");
+        RuleFor(x => x.FitnessGoal).IsInEnum().WithMessage("Invalid fitness goal.");
         RuleFor(x => x.CurrentWeight).InclusiveBetween(20, 500);
         RuleFor(x => x.GoalWeight).InclusiveBetween(20, 500);
     }

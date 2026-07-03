@@ -46,12 +46,20 @@ public class RefreshTokenRepository(AthloDbContext context) : IRefreshTokenRepos
 
     public async Task RevokeAllForUserAsync(Guid userId, CancellationToken ct = default)
     {
-        var tokens = await context.RefreshTokens
-            .Where(t => t.UserId == userId && t.RevokedAt == null)
-            .ToListAsync(ct);
+        if (!context.Database.IsRelational())
+        {
+            var tokens = await context.RefreshTokens
+                .Where(t => t.UserId == userId && t.RevokedAt == null)
+                .ToListAsync(ct);
 
-        foreach (var token in tokens)
-            token.RevokedAt = DateTime.UtcNow;
+            foreach (var token in tokens)
+                token.RevokedAt = DateTime.UtcNow;
+            return;
+        }
+
+        await context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), ct);
     }
 
     public async Task<int> DeleteExpiredAsync(DateTime olderThan, CancellationToken ct = default)
@@ -62,6 +70,7 @@ public class RefreshTokenRepository(AthloDbContext context) : IRefreshTokenRepos
                 .Where(t => t.ExpiresAt < olderThan || (t.RevokedAt != null && t.RevokedAt < olderThan))
                 .ToListAsync(ct);
             context.RefreshTokens.RemoveRange(expired);
+            await context.SaveChangesAsync(ct);
             return expired.Count;
         }
 
