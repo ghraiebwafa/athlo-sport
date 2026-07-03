@@ -56,9 +56,22 @@ public static class SuperAdminSeeder
         }
         else
         {
-            existing.FullName = fullName;
-            existing.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-            logger.LogInformation("Super admin account synchronized from environment.");
+            var changed = false;
+
+            if (existing.FullName != fullName)
+            {
+                existing.FullName = fullName;
+                changed = true;
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(password, existing.PasswordHash))
+            {
+                existing.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                changed = true;
+            }
+
+            if (changed)
+                logger.LogInformation("Super admin account synchronized from environment.");
         }
 
         await context.SaveChangesAsync(ct);

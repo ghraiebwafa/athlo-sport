@@ -37,5 +37,10 @@ public static class ApiServiceExtensions
         if (!isDevOrTest && string.IsNullOrWhiteSpace(smtpHost))
             throw new InvalidOperationException(
                 "Smtp:Host must be configured in production so password reset emails can be sent.");
+
+        var allowedHosts = configuration["AllowedHosts"];
+        if (!isDevOrTest && allowedHosts == "*")
+            throw new InvalidOperationException(
+                "AllowedHosts must not be '*' in production. Set it to your domain(s) separated by ';'.");
     }
 }

@@ -22,7 +22,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddAthloApiDefaults(Configuration);
-        services.AddAthloSwagger("Athlo Auth API");
+        services.AddAthloSwagger("Athlo Auth API", Environment);
         services.AddAthloCors(Configuration);
         if (!Environment.IsEnvironment("Testing"))
             services.AddAthloRateLimiting();

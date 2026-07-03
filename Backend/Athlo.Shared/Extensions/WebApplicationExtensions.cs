@@ -25,8 +25,8 @@ public static class WebApplicationExtensions
         {
             options.AddDefaultPolicy(policy =>
                 policy.WithOrigins(origins)
-                      .AllowAnyHeader()
-                      .AllowAnyMethod());
+                      .WithHeaders("Content-Type", "Authorization", "Accept")
+                      .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         });
 
         return services;

@@ -1,12 +1,16 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 namespace Athlo.Shared.Extensions;
 
 public static class SwaggerServiceExtensions
 {
-    public static IServiceCollection AddAthloSwagger(this IServiceCollection services, string title)
+    public static IServiceCollection AddAthloSwagger(this IServiceCollection services, string title, IWebHostEnvironment environment)
     {
+        if (!environment.IsDevelopment())
+            return services;
+
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {

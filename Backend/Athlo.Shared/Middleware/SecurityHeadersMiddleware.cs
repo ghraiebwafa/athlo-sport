@@ -9,6 +9,7 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         headers["X-Frame-Options"] = "DENY";
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
         headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
 
         if (context.Request.IsHttps)
             headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";

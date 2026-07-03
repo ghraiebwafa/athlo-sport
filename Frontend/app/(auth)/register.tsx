@@ -14,8 +14,8 @@ import { register } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
 import { validateRegisterForm } from '@/lib/validateRegister';
 import { ROUTES } from '@/lib/routes';
-import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
+import type { FitnessGoal } from '@/lib/types';
 
 export default function RegisterScreen() {
   const setSession = useAuthStore((s) => s.setSession);
