@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { theme } from '@/constants/theme';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,7 +29,9 @@ export default function RootLayout() {
     });
   }, [hydrate, loaded]);
 
-  if (!loaded) return null;
+  if (!loaded) {
+    return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

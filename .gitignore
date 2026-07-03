@@ -6,8 +6,8 @@
 !**/.env.example
 
 # .NET
-**/bin/
-**/obj/
+**/[Bb]in/
+**/[Oo]bj/
 *.user
 *.suo
 *.userosscache
@@ -16,8 +16,6 @@
 [Rr]elease/
 *.nupkg
 *.snupkg
-**/[Bb]in/
-**/[Oo]bj/
 
 # Node / Expo
 node_modules/
