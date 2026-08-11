@@ -22,7 +22,6 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { theme } from '@/constants/theme';
 import { createExercise, deleteExercise, getExercises, updateExercise } from '@/lib/api/admin';
 import { getApiErrorMessage, parseApiError } from '@/lib/api/client';
-import { ROUTES } from '@/lib/routes';
 import type { Exercise } from '@/lib/types';
 
 export default function AdminExercisesScreen() {
