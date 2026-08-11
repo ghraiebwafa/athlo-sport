@@ -1,44 +1,70 @@
 using System.Threading.RateLimiting;
 using Athlo.Shared.Helpers;
 using Athlo.Shared.Models;
+using Athlo.Shared.RateLimiting;
+using StackExchange.Redis;
 
 namespace Athlo.Shared.Extensions;
 
 public static class RateLimitingExtensions
 {
-    public static IServiceCollection AddAthloRateLimiting(this IServiceCollection services)
+    public static IServiceCollection AddAthloRateLimiting(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
+        var redisConfig = CachingServiceExtensions.GetRedisConfiguration(configuration);
+        if (!string.IsNullOrWhiteSpace(redisConfig))
+        {
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(redisConfig));
+        }
+
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             options.OnRejected = async (context, _) =>
             {
                 context.HttpContext.Response.ContentType = "application/json";
-                var payload = ApiErrorFactory.Create(ApiErrorCodes.RateLimited, "Too many requests. Please try again later.");
+                var payload = ApiErrorFactory.Create(
+                    ApiErrorCodes.RateLimited,
+                    "Too many requests. Please try again later.");
                 await context.HttpContext.Response.WriteAsJsonAsync(payload);
             };
 
             options.AddPolicy("auth", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 10,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
+                CreatePartition(httpContext, "auth", permitLimit: 10));
 
             options.AddPolicy("api", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 100,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
+                CreatePartition(httpContext, "api", permitLimit: 100));
         });
 
         return services;
+    }
+
+    private static RateLimitPartition<string> CreatePartition(
+        HttpContext httpContext,
+        string policy,
+        int permitLimit)
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var key = $"{policy}:{ip}";
+        var window = TimeSpan.FromMinutes(1);
+        var redis = httpContext.RequestServices.GetService<IConnectionMultiplexer>();
+
+        if (redis is not null)
+        {
+            return RateLimitPartition.Get(
+                key,
+                partitionKey => new RedisFixedWindowRateLimiter(redis, partitionKey, permitLimit, window));
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: key,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = window,
+                QueueLimit = 0
+            });
     }
 }

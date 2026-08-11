@@ -19,8 +19,10 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddAthloApiDefaults(Configuration);
         services.AddAthloSwagger("Athlo Management API", Environment);
         services.AddAthloCors(Configuration);
+        services.AddAthloForwardedHeaders(Configuration);
+        services.AddAthloDistributedCache(Configuration);
         if (!Environment.IsEnvironment("Testing"))
-            services.AddAthloRateLimiting();
+            services.AddAthloRateLimiting(Configuration);
         services.AddAthloDatabase(Configuration);
         services.AddAthloRepositories();
         services.AddAthloJwtAuthentication(Configuration);
@@ -57,6 +59,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
 
     public void Configure(WebApplication app)
     {
+        app.UseAthloForwardedHeaders();
         app.UseAthloSwagger("Athlo Management API");
         if (!Environment.IsEnvironment("Testing"))
             app.UseRateLimiter();
