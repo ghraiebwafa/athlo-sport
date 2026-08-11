@@ -70,3 +70,22 @@ export async function getAdminStats() {
   const { data } = await managementApi.get<AdminDashboardStats>('/api/admin/stats');
   return data;
 }
+
+export async function getAdmins() {
+  const { data } = await authApi.get<AdminUserListItem[]>('/api/admin/admins');
+  return data;
+}
+
+export async function createAdmin(payload: {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}) {
+  const { data } = await authApi.post<AdminUserListItem>('/api/admin/admins', payload);
+  return data;
+}
+
+export async function removeAdmin(id: string) {
+  await authApi.delete(`/api/admin/admins/${id}`);
+}
