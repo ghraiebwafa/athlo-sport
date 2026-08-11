@@ -3,16 +3,16 @@ name: Backend CI
 on:
   push:
     paths:
-      - 'backend/**'
+      - 'Backend/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     paths:
-      - 'backend/**'
+      - 'Backend/**'
       - '.github/workflows/backend-ci.yml'
 
 defaults:
   run:
-    working-directory: backend
+    working-directory: Backend
 
 jobs:
   build-and-test:
@@ -28,10 +28,10 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore Athlo.sln
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build Athlo.sln --no-restore -c Release
 
       - name: Test
-        run: dotnet test --no-build -c Release --verbosity normal
+        run: dotnet test Athlo.sln --no-build -c Release --verbosity normal
