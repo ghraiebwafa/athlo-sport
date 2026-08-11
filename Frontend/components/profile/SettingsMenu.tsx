@@ -1,5 +1,5 @@
 import { ChevronRight, LucideIcon } from 'lucide-react-native';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 
 interface MenuItem {
@@ -36,10 +36,6 @@ export function SettingsMenu({ items, onSelect }: SettingsMenuProps) {
       })}
     </View>
   );
-}
-
-export function showComingSoon(feature: string) {
-  Alert.alert('Coming soon', `${feature} will be available in a future update.`);
 }
 
 const styles = StyleSheet.create({

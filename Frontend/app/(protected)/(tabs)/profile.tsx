@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import {
   Bookmark,
   Calendar,
-  Crown,
   Dumbbell,
   Flame,
   HelpCircle,
@@ -22,7 +21,7 @@ import { AchievementsSection } from '@/components/profile/AchievementsSection';
 import { GoalCard } from '@/components/profile/GoalCard';
 import { OverviewGrid, OverviewTile } from '@/components/profile/OverviewGrid';
 import { PersonalRecordsSection } from '@/components/profile/PersonalRecordsSection';
-import { SettingsMenu, showComingSoon } from '@/components/profile/SettingsMenu';
+import { SettingsMenu } from '@/components/profile/SettingsMenu';
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
 import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
@@ -41,9 +40,7 @@ const baseMenuItems = [
   { id: 'editProfile', label: 'Edit Profile', icon: UserRound },
   { id: 'changePassword', label: 'Change Password', icon: KeyRound },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
-  { id: 'notifications', label: 'Notifications', icon: Settings },
   { id: 'privacy', label: 'Privacy & Security', icon: Lock },
-  { id: 'subscription', label: 'Subscription', icon: Crown },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
   { id: 'logout', label: 'Log Out', icon: LogOut, destructive: true },
 ];
@@ -111,14 +108,18 @@ export default function ProfileScreen() {
       router.push(ROUTES.admin);
       return;
     }
-    const labels: Record<string, string> = {
-      achievements: 'Achievements',
-      notifications: 'Notifications',
-      privacy: 'Privacy & Security',
-      subscription: 'Subscription',
-      help: 'Help & Support',
-    };
-    showComingSoon(labels[id] ?? 'This feature');
+    if (id === 'achievements') {
+      router.push(ROUTES.achievements);
+      return;
+    }
+    if (id === 'privacy') {
+      router.push(ROUTES.privacy);
+      return;
+    }
+    if (id === 'help') {
+      router.push(ROUTES.help);
+      return;
+    }
   };
 
   if ((profileQuery.isLoading || progressQuery.isLoading) && !display) {
@@ -192,7 +193,12 @@ export default function ProfileScreen() {
         </OverviewGrid>
       ) : null}
 
-      {achievements.length > 0 ? <AchievementsSection items={achievements} /> : null}
+      {achievements.length > 0 ? (
+        <AchievementsSection
+          items={achievements}
+          onViewAll={() => router.push(ROUTES.achievements)}
+        />
+      ) : null}
 
       {records.length > 0 ? <PersonalRecordsSection records={records} /> : null}
 

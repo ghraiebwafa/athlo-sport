@@ -1,5 +1,5 @@
 import { Dumbbell, Flame, LucideIcon, Trophy } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 import type { Achievement } from '@/lib/profileHelpers';
 
@@ -12,14 +12,19 @@ const icons: Record<string, LucideIcon> = {
 
 interface AchievementsSectionProps {
   items: Achievement[];
+  onViewAll?: () => void;
 }
 
-export function AchievementsSection({ items }: AchievementsSectionProps) {
+export function AchievementsSection({ items, onViewAll }: AchievementsSectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.title}>Achievements</Text>
-        <Text style={styles.link}>View All</Text>
+        {onViewAll ? (
+          <Pressable onPress={onViewAll} accessibilityRole="button" accessibilityLabel="View all achievements">
+            <Text style={styles.link}>View All</Text>
+          </Pressable>
+        ) : null}
       </View>
       <View style={styles.row}>
         {items.map((item) => {
@@ -29,7 +34,9 @@ export function AchievementsSection({ items }: AchievementsSectionProps) {
               <View style={[styles.hex, { borderColor: item.color }]}>
                 <Icon color={item.unlocked ? item.color : theme.colors.textMuted} size={18} />
               </View>
-              <Text style={styles.badgeTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.badgeTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
             </View>
           );
         })}

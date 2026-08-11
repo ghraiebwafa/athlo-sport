@@ -23,7 +23,6 @@ import { theme } from '@/constants/theme';
 import { createCategory, deleteCategory, updateCategory } from '@/lib/api/admin';
 import { getCategories } from '@/lib/api/programs';
 import { getApiErrorMessage, parseApiError } from '@/lib/api/client';
-import { ROUTES } from '@/lib/routes';
 import type { Category } from '@/lib/types';
 
 function slugify(value: string) {

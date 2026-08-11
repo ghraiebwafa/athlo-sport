@@ -14,10 +14,15 @@ export default function ProtectedLayout() {
         <Stack.Screen name="profile/edit" />
         <Stack.Screen name="profile/change-password" />
         <Stack.Screen name="profile/edit-goals" />
+        <Stack.Screen name="profile/achievements" />
+        <Stack.Screen name="profile/privacy" />
+        <Stack.Screen name="profile/help" />
         <Stack.Screen name="admin/index" />
         <Stack.Screen name="admin/exercises" />
         <Stack.Screen name="admin/categories" />
-        <Stack.Screen name="admin/programs" />
+        <Stack.Screen name="admin/programs/index" />
+        <Stack.Screen name="admin/programs/new" />
+        <Stack.Screen name="admin/programs/[id]" />
         <Stack.Screen name="admin/users" />
       </Stack>
     </AuthGuard>

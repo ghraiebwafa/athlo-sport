@@ -30,6 +30,8 @@ public static class ProgramMapper
             Difficulty = program.Difficulty,
             EstimatedCalories = program.EstimatedCalories,
             ImageUrl = program.ImageUrl,
+            IsFeatured = program.IsFeatured,
+            CategoryId = program.CategoryId,
             CategoryName = program.Category?.Name ?? string.Empty,
             Exercises = program.ProgramExercises
                 .OrderBy(pe => pe.OrderIndex)
