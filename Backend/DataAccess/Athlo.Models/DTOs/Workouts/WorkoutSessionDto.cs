@@ -12,4 +12,5 @@ public class WorkoutSessionDto
     public int? CaloriesBurned { get; set; }
     public WorkoutSessionStatus Status { get; set; }
     public int? DurationMinutes { get; set; }
+    public IReadOnlyList<WorkoutSetLogDto> Sets { get; set; } = [];
 }

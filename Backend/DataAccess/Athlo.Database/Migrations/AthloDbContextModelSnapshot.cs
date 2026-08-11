@@ -317,6 +317,49 @@ namespace Athlo.Database.Migrations
                     b.ToTable("workout_sessions", (string)null);
                 });
 
+            modelBuilder.Entity("Athlo.Models.Entities.WorkoutSetLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LoggedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProgramExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RepsCompleted")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SetNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("WeightKg")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramExerciseId");
+
+                    b.HasIndex("ExerciseId", "Completed");
+
+                    b.HasIndex("SessionId", "ProgramExerciseId", "SetNumber")
+                        .IsUnique();
+
+                    b.ToTable("workout_set_logs", (string)null);
+                });
+
             modelBuilder.Entity("Athlo.Models.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("Athlo.Models.Entities.User", "User")
@@ -388,6 +431,33 @@ namespace Athlo.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Athlo.Models.Entities.WorkoutSetLog", b =>
+                {
+                    b.HasOne("Athlo.Models.Entities.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Athlo.Models.Entities.ProgramExercise", "ProgramExercise")
+                        .WithMany()
+                        .HasForeignKey("ProgramExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Athlo.Models.Entities.WorkoutSession", "Session")
+                        .WithMany("SetLogs")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("ProgramExercise");
+
+                    b.Navigation("Session");
+                });
+
             modelBuilder.Entity("Athlo.Models.Entities.Category", b =>
                 {
                     b.Navigation("Programs");
@@ -410,6 +480,11 @@ namespace Athlo.Database.Migrations
                     b.Navigation("ProgramExercises");
 
                     b.Navigation("WorkoutSessions");
+                });
+
+            modelBuilder.Entity("Athlo.Models.Entities.WorkoutSession", b =>
+                {
+                    b.Navigation("SetLogs");
                 });
 #pragma warning restore 612, 618
         }

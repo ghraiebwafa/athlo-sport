@@ -1,3 +1,4 @@
+using Athlo.Models.DTOs.Progress;
 using Athlo.Models.Entities;
 
 namespace Athlo.Repositories.Workouts;
@@ -12,6 +13,12 @@ public interface IWorkoutSessionRepository
     Task<(int TotalCount, int TotalCalories)> GetCompletedAggregatesAsync(Guid userId, CancellationToken ct = default);
     Task<IReadOnlyList<DateOnly>> GetCompletedDatesAsync(Guid userId, CancellationToken ct = default);
     Task<IReadOnlyList<(Guid ProgramId, int MaxCalories)>> GetMaxCaloriesPerProgramAsync(Guid userId, CancellationToken ct = default);
+    Task<IReadOnlyList<PersonalRecordDto>> GetPersonalRecordsAsync(Guid userId, CancellationToken ct = default);
+    Task<WorkoutSetLog?> GetSetLogAsync(Guid setLogId, CancellationToken ct = default);
+    Task<WorkoutSetLog?> FindSetLogAsync(Guid sessionId, Guid programExerciseId, int setNumber, CancellationToken ct = default);
+    Task AddSetLogAsync(WorkoutSetLog log, CancellationToken ct = default);
+    Task UpdateSetLogAsync(WorkoutSetLog log, CancellationToken ct = default);
+    Task<int> CancelStaleSessionsAsync(DateTime startedBefore, CancellationToken ct = default);
     Task<int> CountCompletedTodayAsync(CancellationToken ct = default);
     Task<int> CountActiveAsync(CancellationToken ct = default);
     Task AddAsync(WorkoutSession session, CancellationToken ct = default);

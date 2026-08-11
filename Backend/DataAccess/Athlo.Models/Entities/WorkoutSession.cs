@@ -14,4 +14,5 @@ public class WorkoutSession
 
     public User User { get; set; } = null!;
     public WorkoutProgram Program { get; set; } = null!;
+    public ICollection<WorkoutSetLog> SetLogs { get; set; } = [];
 }

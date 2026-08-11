@@ -1,4 +1,5 @@
 using Athlo.Database.DbContexts;
+using Athlo.Models.DTOs.Progress;
 using Athlo.Models.Entities;
 using Athlo.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,15 @@ public class WorkoutSessionRepository(AthloDbContext context) : IWorkoutSessionR
     public Task<WorkoutSession?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         context.WorkoutSessions
             .Include(s => s.Program)
+            .Include(s => s.SetLogs)
+                .ThenInclude(l => l.Exercise)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
     public Task<WorkoutSession?> GetActiveSessionAsync(Guid userId, CancellationToken ct = default) =>
         context.WorkoutSessions
             .Include(s => s.Program)
+            .Include(s => s.SetLogs)
+                .ThenInclude(l => l.Exercise)
             .FirstOrDefaultAsync(s => s.UserId == userId && s.Status == WorkoutSessionStatus.InProgress, ct);
 
     public async Task<(IReadOnlyList<WorkoutSession> Items, int TotalCount)> GetHistoryPagedAsync(
@@ -72,6 +77,89 @@ public class WorkoutSessionRepository(AthloDbContext context) : IWorkoutSessionR
             .ToListAsync(ct);
 
         return results.Select(r => (r.ProgramId, r.MaxCalories)).ToList();
+    }
+
+    public async Task<IReadOnlyList<PersonalRecordDto>> GetPersonalRecordsAsync(Guid userId, CancellationToken ct = default)
+    {
+        var logs = await context.WorkoutSetLogs
+            .AsNoTracking()
+            .Include(l => l.Exercise)
+            .Include(l => l.Session)
+            .Where(l =>
+                l.Session.UserId == userId
+                && l.Completed
+                && l.WeightKg != null
+                && l.WeightKg > 0
+                && (l.Session.Status == WorkoutSessionStatus.Completed
+                    || l.Session.Status == WorkoutSessionStatus.InProgress))
+            .ToListAsync(ct);
+
+        return logs
+            .GroupBy(l => l.ExerciseId)
+            .Select(g =>
+            {
+                var best = g
+                    .OrderByDescending(l => l.WeightKg)
+                    .ThenByDescending(l => l.RepsCompleted)
+                    .ThenByDescending(l => l.LoggedAt)
+                    .First();
+                return new PersonalRecordDto
+                {
+                    ExerciseId = best.ExerciseId,
+                    ExerciseName = best.Exercise?.Name ?? string.Empty,
+                    WeightKg = best.WeightKg!.Value,
+                    Reps = best.RepsCompleted,
+                    AchievedAt = best.LoggedAt
+                };
+            })
+            .OrderByDescending(r => r.WeightKg)
+            .ThenBy(r => r.ExerciseName)
+            .ToList();
+    }
+
+    public Task<WorkoutSetLog?> GetSetLogAsync(Guid setLogId, CancellationToken ct = default) =>
+        context.WorkoutSetLogs
+            .Include(l => l.Exercise)
+            .Include(l => l.Session)
+            .FirstOrDefaultAsync(l => l.Id == setLogId, ct);
+
+    public Task<WorkoutSetLog?> FindSetLogAsync(
+        Guid sessionId, Guid programExerciseId, int setNumber, CancellationToken ct = default) =>
+        context.WorkoutSetLogs
+            .Include(l => l.Exercise)
+            .FirstOrDefaultAsync(
+                l => l.SessionId == sessionId
+                     && l.ProgramExerciseId == programExerciseId
+                     && l.SetNumber == setNumber,
+                ct);
+
+    public async Task AddSetLogAsync(WorkoutSetLog log, CancellationToken ct = default) =>
+        await context.WorkoutSetLogs.AddAsync(log, ct);
+
+    public Task UpdateSetLogAsync(WorkoutSetLog log, CancellationToken ct = default)
+    {
+        context.WorkoutSetLogs.Update(log);
+        return Task.CompletedTask;
+    }
+
+    public async Task<int> CancelStaleSessionsAsync(DateTime startedBefore, CancellationToken ct = default)
+    {
+        var stale = await context.WorkoutSessions
+            .Where(s => s.Status == WorkoutSessionStatus.InProgress && s.StartedAt < startedBefore)
+            .ToListAsync(ct);
+
+        if (stale.Count == 0)
+            return 0;
+
+        var completedAt = DateTime.UtcNow;
+        foreach (var session in stale)
+        {
+            session.Status = WorkoutSessionStatus.Cancelled;
+            session.CompletedAt = completedAt;
+        }
+
+        await context.SaveChangesAsync(ct);
+        return stale.Count;
     }
 
     public Task<int> CountCompletedTodayAsync(CancellationToken ct = default)

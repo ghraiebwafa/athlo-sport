@@ -16,7 +16,9 @@ public class WorkoutsController(
     IWorkoutService workoutService,
     IValidator<StartWorkoutRequest> startValidator,
     IValidator<CompleteWorkoutRequest> completeValidator,
-    IValidator<CancelWorkoutRequest> cancelValidator) : ControllerBase
+    IValidator<CancelWorkoutRequest> cancelValidator,
+    IValidator<LogSetRequest> logSetValidator,
+    IValidator<UpdateSetRequest> updateSetValidator) : ControllerBase
 {
     [HttpGet("active")]
     public async Task<ActionResult<WorkoutSessionDto?>> GetActive(CancellationToken ct)
@@ -50,6 +52,26 @@ public class WorkoutsController(
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.CancelAsync(User.GetUserId(), request.SessionId, ct));
+    }
+
+    [HttpPost("{sessionId:guid}/sets")]
+    public async Task<ActionResult<WorkoutSetLogDto>> LogSet(
+        Guid sessionId, [FromBody] LogSetRequest request, CancellationToken ct)
+    {
+        var error = await logSetValidator.ToValidationErrorAsync(request, ct);
+        if (error is not null) return (ActionResult)error;
+
+        return Ok(await workoutService.LogSetAsync(User.GetUserId(), sessionId, request, ct));
+    }
+
+    [HttpPut("sets/{setLogId:guid}")]
+    public async Task<ActionResult<WorkoutSetLogDto>> UpdateSet(
+        Guid setLogId, [FromBody] UpdateSetRequest request, CancellationToken ct)
+    {
+        var error = await updateSetValidator.ToValidationErrorAsync(request, ct);
+        if (error is not null) return (ActionResult)error;
+
+        return Ok(await workoutService.UpdateSetAsync(User.GetUserId(), setLogId, request, ct));
     }
 
     [HttpGet("history")]

@@ -15,6 +15,7 @@ public class AthloDbContext : DbContext
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ProgramExercise> ProgramExercises => Set<ProgramExercise>();
     public DbSet<WorkoutSession> WorkoutSessions => Set<WorkoutSession>();
+    public DbSet<WorkoutSetLog> WorkoutSetLogs => Set<WorkoutSetLog>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,6 +30,7 @@ public class AthloDbContext : DbContext
         ConfigureExercises(modelBuilder);
         ConfigureProgramExercises(modelBuilder);
         ConfigureWorkoutSessions(modelBuilder);
+        ConfigureWorkoutSetLogs(modelBuilder);
     }
 
     private static void ConfigureUsers(ModelBuilder modelBuilder)
@@ -238,6 +240,36 @@ public class AthloDbContext : DbContext
             entity.HasIndex(s => s.UserId)
                 .IsUnique()
                 .HasFilter("\"Status\" = 'InProgress'");
+        });
+    }
+
+    private static void ConfigureWorkoutSetLogs(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<WorkoutSetLog>(entity =>
+        {
+            entity.ToTable("workout_set_logs");
+
+            entity.HasKey(s => s.Id);
+
+            entity.Property(s => s.WeightKg).HasPrecision(8, 2);
+
+            entity.HasOne(s => s.Session)
+                .WithMany(ws => ws.SetLogs)
+                .HasForeignKey(s => s.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.ProgramExercise)
+                .WithMany()
+                .HasForeignKey(s => s.ProgramExerciseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.Exercise)
+                .WithMany()
+                .HasForeignKey(s => s.ExerciseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(s => new { s.SessionId, s.ProgramExerciseId, s.SetNumber }).IsUnique();
+            entity.HasIndex(s => new { s.ExerciseId, s.Completed });
         });
     }
 }
