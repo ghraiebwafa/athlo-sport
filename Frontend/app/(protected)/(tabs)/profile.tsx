@@ -41,6 +41,8 @@ const baseMenuItems = [
   { id: 'changePassword', label: 'Change Password', icon: KeyRound },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
   { id: 'privacy', label: 'Privacy & Security', icon: Lock },
+  { id: 'notifications', label: 'Notifications', icon: Settings },
+  { id: 'devices', label: 'Devices & Heart Rate', icon: Zap },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
   { id: 'logout', label: 'Log Out', icon: LogOut, destructive: true },
 ];
@@ -118,6 +120,14 @@ export default function ProfileScreen() {
     }
     if (id === 'help') {
       router.push(ROUTES.help);
+      return;
+    }
+    if (id === 'notifications') {
+      router.push(ROUTES.notifications);
+      return;
+    }
+    if (id === 'devices') {
+      router.push(ROUTES.devices);
       return;
     }
   };
@@ -200,7 +210,12 @@ export default function ProfileScreen() {
         />
       ) : null}
 
-      {records.length > 0 ? <PersonalRecordsSection records={records} /> : null}
+      {records.length > 0 ? (
+        <PersonalRecordsSection
+          records={records}
+          onViewAll={() => router.push(ROUTES.personalRecords)}
+        />
+      ) : null}
 
       <SettingsMenu items={menuItems} onSelect={handleMenu} />
 

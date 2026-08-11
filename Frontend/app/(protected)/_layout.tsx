@@ -17,6 +17,9 @@ export default function ProtectedLayout() {
         <Stack.Screen name="profile/achievements" />
         <Stack.Screen name="profile/privacy" />
         <Stack.Screen name="profile/help" />
+        <Stack.Screen name="profile/personal-records" />
+        <Stack.Screen name="profile/notifications" />
+        <Stack.Screen name="profile/devices" />
         <Stack.Screen name="admin/index" />
         <Stack.Screen name="admin/exercises" />
         <Stack.Screen name="admin/categories" />
@@ -24,6 +27,7 @@ export default function ProtectedLayout() {
         <Stack.Screen name="admin/programs/new" />
         <Stack.Screen name="admin/programs/[id]" />
         <Stack.Screen name="admin/users" />
+        <Stack.Screen name="admin/admins" />
       </Stack>
     </AuthGuard>
   );

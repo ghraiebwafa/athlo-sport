@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { theme } from '@/constants/theme';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
+import { usePreferencesStore } from '@/stores/preferencesStore';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -18,16 +19,18 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   const hydrate = useAuthStore((s) => s.hydrate);
+  const hydratePrefs = usePreferencesStore((s) => s.hydrate);
 
   useEffect(() => {
     if (fontError) throw fontError;
   }, [fontError]);
 
   useEffect(() => {
+    void hydratePrefs();
     hydrate().finally(() => {
       if (loaded) SplashScreen.hideAsync();
     });
-  }, [hydrate, loaded]);
+  }, [hydrate, hydratePrefs, loaded]);
 
   if (!loaded) {
     return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
