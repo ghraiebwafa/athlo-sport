@@ -29,6 +29,12 @@ export interface Category {
   programCount: number;
 }
 
+export interface Exercise {
+  id: string;
+  name: string;
+  imageUrl?: string;
+}
+
 export interface ProgramListItem {
   id: string;
   name: string;
@@ -53,9 +59,47 @@ export interface ProgramExercise {
   imageUrl?: string;
 }
 
-export interface ProgramDetail extends Omit<ProgramListItem, 'exerciseCount' | 'isFeatured' | 'categoryName'> {
+export interface ProgramDetail extends Omit<ProgramListItem, 'exerciseCount' | 'categoryName'> {
+  categoryId: string;
   categoryName: string;
   exercises: ProgramExercise[];
+}
+
+export interface ProgramExerciseInput {
+  exerciseId: string;
+  orderIndex: number;
+  sets: number;
+  reps: number;
+  durationSeconds?: number;
+}
+
+export interface CreateProgramPayload {
+  name: string;
+  description: string;
+  durationMinutes: number;
+  difficulty: WorkoutDifficulty;
+  estimatedCalories: number;
+  imageUrl?: string;
+  isFeatured: boolean;
+  categoryId: string;
+  exercises: ProgramExerciseInput[];
+}
+
+export interface AdminUserListItem {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface AdminDashboardStats {
+  totalUsers: number;
+  totalAdmins: number;
+  totalPrograms: number;
+  totalExercises: number;
+  completedWorkoutsToday: number;
+  activeWorkoutsNow: number;
 }
 
 export interface WorkoutSetLog {

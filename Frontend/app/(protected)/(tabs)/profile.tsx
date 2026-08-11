@@ -12,6 +12,7 @@ import {
   LogOut,
   Scale,
   Settings,
+  Shield,
   Trophy,
   UserRound,
   Zap,
@@ -31,9 +32,10 @@ import { getApiErrorMessage } from '@/lib/api/client';
 import { signOutAndRedirect } from '@/lib/authSession';
 import { getProgress } from '@/lib/api/progress';
 import { buildAchievements, buildPersonalRecords } from '@/lib/profileHelpers';
+import { isAdminRole } from '@/lib/roles';
 import { getTokens, useAuthStore } from '@/stores/authStore';
 
-const menuItems = [
+const baseMenuItems = [
   { id: 'history', label: 'Workout History', icon: Calendar },
   { id: 'saved', label: 'Saved Programs', icon: Bookmark },
   { id: 'editProfile', label: 'Edit Profile', icon: UserRound },
@@ -63,6 +65,13 @@ export default function ProfileScreen() {
 
   const display = profileQuery.data ?? user;
   const progress = progressQuery.data;
+
+  const menuItems = isAdminRole(display?.role)
+    ? [
+        { id: 'admin', label: 'Admin Console', icon: Shield },
+        ...baseMenuItems,
+      ]
+    : baseMenuItems;
 
   const handleLogout = async () => {
     const tokens = getTokens();
@@ -96,6 +105,10 @@ export default function ProfileScreen() {
     }
     if (id === 'changePassword') {
       router.push(ROUTES.changePassword);
+      return;
+    }
+    if (id === 'admin') {
+      router.push(ROUTES.admin);
       return;
     }
     const labels: Record<string, string> = {

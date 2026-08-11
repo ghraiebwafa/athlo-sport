@@ -6,9 +6,10 @@ import { theme } from '@/constants/theme';
 interface ScreenHeaderProps {
   title: string;
   onBack: () => void;
+  right?: React.ReactNode;
 }
 
-export function ScreenHeader({ title, onBack }: ScreenHeaderProps) {
+export function ScreenHeader({ title, onBack, right }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -23,7 +24,7 @@ export function ScreenHeader({ title, onBack }: ScreenHeaderProps) {
         <ChevronLeft color={theme.colors.text} size={26} />
       </Pressable>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.spacer} />
+      <View style={styles.spacer}>{right}</View>
     </View>
   );
 }
@@ -38,5 +39,5 @@ const styles = StyleSheet.create({
   },
   back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   title: { color: theme.colors.text, fontSize: 17, fontWeight: '600' },
-  spacer: { width: 40 },
+  spacer: { width: 40, alignItems: 'flex-end', justifyContent: 'center' },
 });

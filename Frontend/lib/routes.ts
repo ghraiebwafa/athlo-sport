@@ -16,8 +16,21 @@ export const ROUTES = {
   editGoals: '/(protected)/profile/edit-goals' as Href,
   workoutHistory: '/(protected)/workout/history' as Href,
   savedPrograms: '/(protected)/programs/saved' as Href,
+  admin: '/(protected)/admin' as Href,
+  adminExercises: '/(protected)/admin/exercises' as Href,
+  adminCategories: '/(protected)/admin/categories' as Href,
+  adminPrograms: '/(protected)/admin/programs' as Href,
+  adminUsers: '/(protected)/admin/users' as Href,
 } as const;
 
 export function programDetail(id: string): Href {
   return `/(protected)/program/${id}` as Href;
+}
+
+export function adminProgramEdit(id: string): Href {
+  return `/(protected)/admin/programs/${id}` as Href;
+}
+
+export function adminProgramCreate(): Href {
+  return '/(protected)/admin/programs/new' as Href;
 }
