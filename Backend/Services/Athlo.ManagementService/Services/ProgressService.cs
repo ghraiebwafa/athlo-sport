@@ -1,6 +1,5 @@
 using Athlo.Mapper;
 using Athlo.Models.DTOs.Progress;
-using Athlo.Models.Entities;
 using Athlo.Repositories.Users;
 using Athlo.Repositories.Workouts;
 using Athlo.Shared.Exceptions;
@@ -17,17 +16,11 @@ public class ProgressService(
         var user = await userRepository.GetByIdAsync(userId, ct)
             ?? throw new NotFoundException("User not found.");
 
-        var aggregatesTask = sessionRepository.GetCompletedAggregatesAsync(userId, ct);
-        var datesTask = sessionRepository.GetCompletedDatesAsync(userId, ct);
-        var bestsTask = sessionRepository.GetMaxCaloriesPerProgramAsync(userId, ct);
-        var recentTask = sessionRepository.GetHistoryPagedAsync(userId, 1, 10, ct);
-
-        await Task.WhenAll(aggregatesTask, datesTask, bestsTask, recentTask);
-
-        var (totalCount, totalCalories) = aggregatesTask.Result;
-        var dates = datesTask.Result;
-        var maxCaloriesPerProgram = bestsTask.Result;
-        var (recentItems, _) = recentTask.Result;
+        // Sequential: repositories share one scoped DbContext (EF Core is not thread-safe).
+        var (totalCount, totalCalories) = await sessionRepository.GetCompletedAggregatesAsync(userId, ct);
+        var dates = await sessionRepository.GetCompletedDatesAsync(userId, ct);
+        var personalRecords = await sessionRepository.GetPersonalRecordsAsync(userId, ct);
+        var (recentItems, _) = await sessionRepository.GetHistoryPagedAsync(userId, 1, 10, ct);
 
         var streak = StreakCalculator.Calculate(dates);
 
@@ -48,13 +41,14 @@ public class ProgressService(
             TotalWorkouts = totalCount,
             TotalCaloriesBurned = totalCalories,
             CurrentStreak = streak,
-            PersonalBests = maxCaloriesPerProgram.Count,
+            PersonalBests = personalRecords.Count,
             GoalProgressPercent = UserMapper.CalculateGoalProgress(
                 user.InitialWeight, user.CurrentWeight, user.GoalWeight, user.FitnessGoal),
             CurrentWeight = user.CurrentWeight,
             GoalWeight = user.GoalWeight,
             WeeklyFrequency = weeklyFrequency,
-            RecentWorkouts = recentItems.Select(WorkoutMapper.ToHistoryItem).ToList()
+            RecentWorkouts = recentItems.Select(WorkoutMapper.ToHistoryItem).ToList(),
+            PersonalRecords = personalRecords
         };
     }
 

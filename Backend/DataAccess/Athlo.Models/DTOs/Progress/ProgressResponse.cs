@@ -11,6 +11,7 @@ public class ProgressResponse
     public decimal GoalWeight { get; set; }
     public IReadOnlyList<WeeklyWorkoutDto> WeeklyFrequency { get; set; } = [];
     public IReadOnlyList<WorkoutHistoryItemDto> RecentWorkouts { get; set; } = [];
+    public IReadOnlyList<PersonalRecordDto> PersonalRecords { get; set; } = [];
 }
 
 public class WeeklyWorkoutDto

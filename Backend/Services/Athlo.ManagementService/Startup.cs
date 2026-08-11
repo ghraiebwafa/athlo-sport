@@ -1,5 +1,6 @@
 using Athlo.Database;
 using Athlo.Database.DbContexts;
+using Athlo.ManagementService.Background;
 using Athlo.ManagementService.Services;
 using Athlo.ManagementService.Validators;
 using Athlo.Repositories;
@@ -30,6 +31,8 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IAdminStatsService, AdminStatsService>();
+        if (!Environment.IsEnvironment("Testing"))
+            services.AddAthloStaleWorkoutCleanup();
     }
 
     public async Task InitializeAsync(WebApplication app)

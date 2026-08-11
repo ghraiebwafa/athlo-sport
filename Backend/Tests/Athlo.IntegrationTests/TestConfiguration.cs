@@ -13,6 +13,8 @@ public static class TestConfiguration
         ["SuperAdmin:Email"] = "superadmin@test.local",
         ["SuperAdmin:Password"] = "SuperAdmin123!",
         ["SuperAdmin:FullName"] = "Super Admin",
-        ["Cors:AllowedOrigins"] = "http://localhost:8081"
+        ["Cors:AllowedOrigins"] = "http://localhost:8081",
+        // Testing only — lets password-reset integration tests assert the token flow.
+        ["Auth:ExposeResetTokenInResponse"] = "true"
     };
 }
