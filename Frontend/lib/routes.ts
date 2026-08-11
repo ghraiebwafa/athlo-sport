@@ -21,6 +21,9 @@ export const ROUTES = {
   adminCategories: '/(protected)/admin/categories' as Href,
   adminPrograms: '/(protected)/admin/programs' as Href,
   adminUsers: '/(protected)/admin/users' as Href,
+  achievements: '/(protected)/profile/achievements' as Href,
+  privacy: '/(protected)/profile/privacy' as Href,
+  help: '/(protected)/profile/help' as Href,
 } as const;
 
 export function programDetail(id: string): Href {
