@@ -205,7 +205,8 @@ public class AuthService(
         await emailSender.SendPasswordResetEmailAsync(user.Email, tokenValue, ct);
 
         var exposeToken = configuration.GetValue("Auth:ExposeResetTokenInResponse", false);
-        if (environment.IsDevelopment() && exposeToken)
+        var allowExpose = environment.IsDevelopment() || environment.IsEnvironment("Testing");
+        if (allowExpose && exposeToken)
             response.ResetToken = tokenValue;
 
         return response;
