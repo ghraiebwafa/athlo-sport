@@ -31,6 +31,28 @@ export async function getProfile() {
   return data;
 }
 
+export interface UpdateProfilePayload {
+  fullName?: string;
+  currentWeight?: number;
+  goalWeight?: number;
+  fitnessGoal?: FitnessGoal;
+}
+
+export async function updateProfile(payload: UpdateProfilePayload) {
+  const { data } = await authApi.put<UserProfile>('/api/auth/profile', payload);
+  return data;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export async function changePassword(payload: ChangePasswordPayload) {
+  await authApi.post('/api/auth/change-password', payload);
+}
+
 export async function forgotPassword(email: string) {
   const { data } = await authApi.post<{ message: string; resetToken?: string }>(
     '/api/auth/forgot-password',

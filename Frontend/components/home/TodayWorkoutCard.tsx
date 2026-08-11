@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Clock, Dumbbell } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/constants/theme';
 import { programDetail, ROUTES } from '@/lib/routes';

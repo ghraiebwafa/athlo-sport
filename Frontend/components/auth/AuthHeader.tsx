@@ -1,15 +1,16 @@
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AthloLogo } from '@/components/brand/AthloLogo';
 import { theme } from '@/constants/theme';
+import { ROUTES } from '@/lib/routes';
 
 interface AuthHeaderProps {
   showBack?: boolean;
-  backFallback?: '/onboarding' | '/(auth)/login';
+  backFallback?: Href;
 }
 
-export function AuthHeader({ showBack = true, backFallback = '/onboarding' }: AuthHeaderProps) {
+export function AuthHeader({ showBack = true, backFallback = ROUTES.onboarding }: AuthHeaderProps) {
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();

@@ -30,8 +30,8 @@ export function CurrentExerciseCard({ exercise, setLabel, repProgress }: Current
         <Text style={styles.set}>{setLabel}</Text>
         <Text style={styles.reps}>
           {exercise.durationSeconds
-            ? `${exercise.durationSeconds} sec hold`
-            : `${Math.floor((repProgress / 100) * exercise.reps)} / ${exercise.reps} reps`}
+            ? `${exercise.durationSeconds} sec · target ${exercise.sets} sets`
+            : `Target ${exercise.sets} × ${exercise.reps}`}
         </Text>
       </View>
       <View style={styles.ringWrap}>

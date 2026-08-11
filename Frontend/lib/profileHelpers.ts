@@ -65,7 +65,19 @@ export interface PersonalRecord {
   color: string;
 }
 
+const PR_COLORS = ['#007AFF', '#FF9500', '#34C759', '#AF52DE', '#FF2D55'];
+
 export function buildPersonalRecords(progress: ProgressData): PersonalRecord[] {
+  const liftRecords = progress.personalRecords ?? [];
+  if (liftRecords.length > 0) {
+    return liftRecords.slice(0, 5).map((record, index) => ({
+      id: record.exerciseId,
+      label: record.exerciseName,
+      value: `${formatWeight(record.weightKg)} kg × ${record.reps}`,
+      color: PR_COLORS[index % PR_COLORS.length],
+    }));
+  }
+
   const workouts = progress.recentWorkouts;
   const longest = workouts.reduce((max, w) => Math.max(max, w.durationMinutes), 0);
   const mostCal = workouts.reduce((max, w) => Math.max(max, w.caloriesBurned), 0);
@@ -75,6 +87,10 @@ export function buildPersonalRecords(progress: ProgressData): PersonalRecord[] {
     { id: 'calories', label: 'Most Calories Burned', value: `${mostCal || 0} kcal`, color: '#FF9500' },
     { id: 'streak', label: 'Current Streak', value: `${progress.currentStreak} days`, color: '#34C759' },
   ];
+}
+
+function formatWeight(kg: number): string {
+  return Number.isInteger(kg) ? String(kg) : kg.toFixed(1);
 }
 
 export function memberLabel(role: UserProfile['role']): string {

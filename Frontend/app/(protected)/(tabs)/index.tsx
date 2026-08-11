@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Flame, Footprints, Trophy } from 'lucide-react-native';
+import { Flame, Trophy } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TodayWorkoutCard } from '@/components/home/TodayWorkoutCard';
 import { StatTile } from '@/components/home/StatTile';
 import { UpcomingWorkoutRow } from '@/components/home/UpcomingWorkoutRow';
 import { WeeklyGoalCard } from '@/components/home/WeeklyGoalCard';
+import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
 import {
@@ -53,20 +54,26 @@ export default function HomeScreen() {
 
   if (progressQuery.isError || programsQuery.isError) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>
-          {getApiErrorMessage(progressQuery.error ?? programsQuery.error)}
-        </Text>
-      </View>
+      <QueryState
+        message={getApiErrorMessage(progressQuery.error ?? programsQuery.error)}
+        onRetry={() => {
+          void progressQuery.refetch();
+          void programsQuery.refetch();
+        }}
+      />
     );
   }
 
   const progress = progressQuery.data;
   if (!progress) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>Unable to load your dashboard.</Text>
-      </View>
+      <QueryState
+        message="Unable to load your dashboard."
+        onRetry={() => {
+          void progressQuery.refetch();
+          void programsQuery.refetch();
+        }}
+      />
     );
   }
 
@@ -86,7 +93,12 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.date}>{formatLongDate()}</Text>
         </View>
-        <Pressable style={styles.avatar} onPress={() => router.push(ROUTES.profile)}>
+        <Pressable
+          style={styles.avatar}
+          onPress={() => router.push(ROUTES.profile)}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+        >
           <Text style={styles.avatarText}>
             {(user?.fullName ?? 'A').charAt(0).toUpperCase()}
           </Text>
@@ -97,15 +109,9 @@ export default function HomeScreen() {
         <StatTile
           icon={Flame}
           iconColor={theme.colors.orange}
-          label="Calories Burned"
+          label="Calories Today"
           value={String(todayCalories || progress.totalCaloriesBurned)}
           unit="kcal"
-        />
-        <StatTile
-          icon={Footprints}
-          iconColor={theme.colors.primary}
-          label="Steps"
-          value="N/A"
         />
         <StatTile
           icon={Trophy}
@@ -160,5 +166,4 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.lg },
   section: { marginTop: theme.spacing.sm },
   sectionTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '700', marginBottom: theme.spacing.sm },
-  error: { color: theme.colors.error, padding: theme.spacing.md },
 });

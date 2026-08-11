@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, Dumbbell, Flame, Trophy } from 'lucide-react-native';
+import { Clock, Dumbbell, Flame, Trophy } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FrequencyBarChart } from '@/components/progress/FrequencyBarChart';
 import { MuscleGroupChart } from '@/components/progress/MuscleGroupChart';
 import { OverviewCard } from '@/components/progress/OverviewCard';
-import { ProgressPhotosSection } from '@/components/progress/ProgressPhotosSection';
 import { TimeRangeFilter } from '@/components/progress/TimeRangeFilter';
+import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getProgress } from '@/lib/api/progress';
@@ -24,7 +24,7 @@ import {
 
 export default function ProgressScreen() {
   const [range, setRange] = useState<TimeRange>('1M');
-  const { data, isLoading, isError, error } = useQuery({ queryKey: ['progress'], queryFn: getProgress });
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['progress'], queryFn: getProgress });
 
   const filtered = useMemo(() => {
     if (!data) return null;
@@ -62,9 +62,10 @@ export default function ProgressScreen() {
 
   if (isError || !data || !filtered) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
-      </View>
+      <QueryState
+        message={getApiErrorMessage(error) || 'Unable to load progress.'}
+        onRetry={() => void refetch()}
+      />
     );
   }
 
@@ -72,9 +73,6 @@ export default function ProgressScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.heading}>Progress</Text>
-        <View style={styles.calendarBtn}>
-          <Calendar color={theme.colors.primary} size={22} />
-        </View>
       </View>
 
       <TimeRangeFilter value={range} onChange={setRange} />
@@ -142,7 +140,12 @@ export default function ProgressScreen() {
         </View>
       ) : null}
 
-      <ProgressPhotosSection />
+      <View style={styles.comingSoon}>
+        <Text style={styles.comingSoonTitle}>Progress Photos</Text>
+        <Text style={styles.comingSoonText}>
+          Photo tracking is not available yet. Coming in a future update.
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -153,16 +156,6 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md },
   heading: { fontSize: 28, fontWeight: '700', color: theme.colors.text },
-  calendarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
   overviewScroll: { marginVertical: theme.spacing.md },
   goalCard: {
     backgroundColor: theme.colors.surface,
@@ -199,5 +192,14 @@ const styles = StyleSheet.create({
   workoutName: { color: theme.colors.text, fontWeight: '600' },
   workoutMeta: { color: theme.colors.textMuted, fontSize: 12, marginTop: 2 },
   workoutCal: { color: theme.colors.primary, fontWeight: '600' },
-  error: { color: theme.colors.error },
+  comingSoon: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.lg,
+  },
+  comingSoonTitle: { color: theme.colors.text, fontWeight: '700', fontSize: 16, marginBottom: 4 },
+  comingSoonText: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 18 },
 });

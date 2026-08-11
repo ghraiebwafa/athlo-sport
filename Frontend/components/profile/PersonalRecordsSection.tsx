@@ -1,4 +1,3 @@
-import { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 import type { PersonalRecord } from '@/lib/profileHelpers';
@@ -12,19 +11,22 @@ export function PersonalRecordsSection({ records }: PersonalRecordsSectionProps)
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.title}>Personal Records</Text>
-        <Text style={styles.link}>View All</Text>
       </View>
-      {records.map((record) => (
-        <View key={record.id} style={styles.row}>
-          <View style={[styles.icon, { backgroundColor: `${record.color}22` }]}>
-            <View style={[styles.dot, { backgroundColor: record.color }]} />
+      {records.length === 0 ? (
+        <Text style={styles.empty}>Log weighted sets to unlock lift PRs.</Text>
+      ) : (
+        records.map((record) => (
+          <View key={record.id} style={styles.row}>
+            <View style={[styles.icon, { backgroundColor: `${record.color}22` }]}>
+              <View style={[styles.dot, { backgroundColor: record.color }]} />
+            </View>
+            <View style={styles.text}>
+              <Text style={styles.label}>{record.label}</Text>
+              <Text style={styles.value}>{record.value}</Text>
+            </View>
           </View>
-          <View style={styles.text}>
-            <Text style={styles.label}>{record.label}</Text>
-            <Text style={styles.value}>{record.value}</Text>
-          </View>
-        </View>
-      ))}
+        ))
+      )}
     </View>
   );
 }
@@ -33,7 +35,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: theme.spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
   title: { color: theme.colors.text, fontWeight: '700', fontSize: 16 },
-  link: { color: theme.colors.primary, fontWeight: '600', fontSize: 13 },
+  empty: { color: theme.colors.textMuted, fontSize: 13, marginBottom: theme.spacing.sm },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

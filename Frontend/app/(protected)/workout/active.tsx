@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CurrentExerciseCard } from '@/components/workout/CurrentExerciseCard';
-import { MusicBar } from '@/components/workout/MusicBar';
+import { SetLogger } from '@/components/workout/SetLogger';
 import { UpNextCard } from '@/components/workout/UpNextCard';
 import { WorkoutControls } from '@/components/workout/WorkoutControls';
 import { WorkoutProgressBar } from '@/components/workout/WorkoutProgressBar';
@@ -27,11 +27,10 @@ import {
   estimateCaloriesBurned,
   estimateHeartRate,
   estimateIntensity,
-  exerciseProgress,
   formatHms,
   formatMmSs,
 } from '@/lib/workoutTimer';
-import { cancelWorkout, completeWorkout, getActiveWorkout } from '@/lib/api/workouts';
+import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet } from '@/lib/api/workouts';
 import { ROUTES } from '@/lib/routes';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
 
@@ -39,10 +38,11 @@ export default function ActiveWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const setSummary = useWorkoutCompleteStore((s) => s.setSummary);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   const [paused, setPaused] = useState(false);
   const pausedAtRef = useRef<number | null>(null);
   const [pausedTotal, setPausedTotal] = useState(0);
+  const [exerciseIndex, setExerciseIndex] = useState(0);
 
   const { data: session, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['activeWorkout'],
@@ -61,12 +61,14 @@ export default function ActiveWorkoutScreen() {
     return () => clearInterval(timer);
   }, [session, paused]);
 
+  const exercises = programQuery.data?.exercises ?? [];
+  const loggedSets = session?.sets ?? [];
+
   const completeMutation = useMutation({
     mutationFn: (calories: number) => completeWorkout(session!.id, calories),
     onSuccess: (data, calories) => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
-      const exercises = programQuery.data?.exercises ?? [];
       const elapsed = elapsedSeconds(session!.startedAt, now) - pausedTotal;
       void setSummary({
         sessionId: data.id,
@@ -94,6 +96,20 @@ export default function ActiveWorkoutScreen() {
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
 
+  const logSetMutation = useMutation({
+    mutationFn: (input: {
+      programExerciseId: string;
+      setNumber: number;
+      repsCompleted: number;
+      weightKg?: number;
+    }) => logWorkoutSet(session!.id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+    },
+    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+  });
+
   const metrics = useMemo(() => {
     if (!session) return null;
     const elapsed = elapsedSeconds(session.startedAt, now) - pausedTotal;
@@ -110,27 +126,27 @@ export default function ActiveWorkoutScreen() {
       heartRate: estimateHeartRate(elapsed),
       intensity: estimateIntensity(progress),
     };
-  }, [session, now, programQuery.data]);
+  }, [session, now, programQuery.data, pausedTotal]);
 
   const exerciseState = useMemo(() => {
-    const exercises = programQuery.data?.exercises ?? [];
-    if (!metrics || exercises.length === 0) {
-      return { current: exercises[0], next: exercises[1], setLabel: 'Set 1 of 1', repProgress: 0 };
+    if (exercises.length === 0) {
+      return { current: undefined, next: undefined, setLabel: 'Set 1 of 1', repProgress: 0 };
     }
-    const { index, progressPercent } = exerciseProgress(
-      metrics.elapsed,
-      programQuery.data?.durationMinutes ?? 30,
-      exercises.length
-    );
+    const index = Math.min(exerciseIndex, exercises.length - 1);
     const current = exercises[index];
-    const setNum = Math.min(current.sets, Math.floor(progressPercent / (100 / current.sets)) + 1);
+    const completedForExercise = loggedSets.filter(
+      (s) => s.programExerciseId === current.id && s.completed
+    ).length;
+    const setNum = Math.min(current.sets, Math.max(1, completedForExercise + 1));
+    const repProgress = Math.min(100, Math.round((completedForExercise / Math.max(1, current.sets)) * 100));
     return {
       current,
       next: exercises[index + 1],
       setLabel: `Set ${setNum} of ${current.sets}`,
-      repProgress: progressPercent,
+      repProgress,
+      completedForExercise,
     };
-  }, [metrics, programQuery.data]);
+  }, [exercises, exerciseIndex, loggedSets]);
 
   const togglePause = () => {
     if (paused) {
@@ -199,14 +215,18 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  const currentLogs = exerciseState.current
+    ? loggedSets.filter((s) => s.programExerciseId === exerciseState.current!.id)
+    : [];
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={handleBack} hitSlop={8}>
+        <Pressable onPress={handleBack} hitSlop={8} accessibilityLabel="Leave workout">
           <ChevronLeft color={theme.colors.text} size={26} />
         </Pressable>
         <Text style={styles.headerTitle}>Active Workout</Text>
-        <Pressable onPress={handleEnd} hitSlop={8}>
+        <Pressable onPress={handleEnd} hitSlop={8} accessibilityLabel="End workout">
           <Text style={styles.end}>End</Text>
         </Pressable>
       </View>
@@ -250,11 +270,36 @@ export default function ActiveWorkoutScreen() {
         </View>
 
         {exerciseState.current ? (
-          <CurrentExerciseCard
-            exercise={exerciseState.current}
-            setLabel={exerciseState.setLabel}
-            repProgress={exerciseState.repProgress}
-          />
+          <>
+            <CurrentExerciseCard
+              exercise={exerciseState.current}
+              setLabel={exerciseState.setLabel}
+              repProgress={exerciseState.repProgress}
+            />
+            <SetLogger
+              key={exerciseState.current.id}
+              exercise={exerciseState.current}
+              loggedSets={currentLogs}
+              busy={logSetMutation.isPending}
+              onLogSet={(input) => logSetMutation.mutate(input)}
+            />
+            {exercises.length > 1 ? (
+              <View style={styles.navRow}>
+                <Button
+                  title="Previous"
+                  variant="secondary"
+                  onPress={() => setExerciseIndex((i) => Math.max(0, i - 1))}
+                  disabled={exerciseIndex <= 0}
+                />
+                <Button
+                  title="Next exercise"
+                  variant="secondary"
+                  onPress={() => setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1))}
+                  disabled={exerciseIndex >= exercises.length - 1}
+                />
+              </View>
+            ) : null}
+          </>
         ) : null}
 
         {exerciseState.next ? <UpNextCard exercise={exerciseState.next} /> : null}
@@ -262,8 +307,6 @@ export default function ActiveWorkoutScreen() {
         <WorkoutProgressBar percent={metrics.progress} />
 
         <WorkoutControls paused={paused} onTogglePause={togglePause} />
-
-        <MusicBar />
       </ScrollView>
     </View>
   );
@@ -299,6 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
   },
+  navRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.md },
   centered: {
     flex: 1,
     justifyContent: 'center',

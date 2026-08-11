@@ -1,14 +1,15 @@
 import { Target } from 'lucide-react-native';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 import { formatFitnessGoal, kgToGo } from '@/lib/profileHelpers';
 import type { UserProfile } from '@/lib/types';
 
 interface GoalCardProps {
   user: UserProfile;
+  onEdit?: () => void;
 }
 
-export function GoalCard({ user }: GoalCardProps) {
+export function GoalCard({ user, onEdit }: GoalCardProps) {
   const goalText = formatFitnessGoal(user.fitnessGoal, user.currentWeight, user.goalWeight);
   const remaining = kgToGo(user.currentWeight, user.goalWeight, user.fitnessGoal);
   const progress = Math.round(user.goalProgressPercent);
@@ -20,9 +21,11 @@ export function GoalCard({ user }: GoalCardProps) {
           <Target color={theme.colors.primary} size={18} />
           <Text style={styles.title}>My Goal</Text>
         </View>
-        <Pressable onPress={() => Alert.alert('Coming soon', 'Goal editing will be available in a future update.')}>
-          <Text style={styles.edit}>Edit Goal</Text>
-        </Pressable>
+        {onEdit ? (
+          <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel="Edit goals">
+            <Text style={styles.edit}>Edit Goal</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.stats}>

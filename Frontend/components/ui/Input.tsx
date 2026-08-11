@@ -27,7 +27,12 @@ export function Input({ label, error, icon: Icon, secureToggle, secureTextEntry,
           {...props}
         />
         {secureToggle ? (
-          <Pressable onPress={() => setHidden((v) => !v)} hitSlop={8}>
+          <Pressable
+            onPress={() => setHidden((v) => !v)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
+          >
             {hidden ? (
               <EyeOff color={theme.colors.textMuted} size={18} />
             ) : (

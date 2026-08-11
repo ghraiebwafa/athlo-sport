@@ -21,17 +21,22 @@ export default function WorkoutCompleteScreen() {
   const hydrateSummary = useWorkoutCompleteStore((s) => s.hydrateSummary);
   const clearSummary = useWorkoutCompleteStore((s) => s.clearSummary);
   const queryClient = useQueryClient();
-  const [hydrated, setHydrated] = useState(!!summary);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (summary) {
-      setHydrated(true);
-      return;
-    }
-    void hydrateSummary().finally(() => setHydrated(true));
-  }, [summary, hydrateSummary]);
+    let cancelled = false;
+    void (async () => {
+      if (!useWorkoutCompleteStore.getState().summary) {
+        await hydrateSummary();
+      }
+      if (!cancelled) setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrateSummary]);
 
-  if (!hydrated) {
+  if (!ready) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.empty}>Loading summary…</Text>

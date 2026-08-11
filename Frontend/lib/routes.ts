@@ -11,6 +11,11 @@ export const ROUTES = {
   onboarding: '/onboarding' as Href,
   activeWorkout: '/(protected)/workout/active' as Href,
   completeWorkout: '/(protected)/workout/complete' as Href,
+  editProfile: '/(protected)/profile/edit' as Href,
+  changePassword: '/(protected)/profile/change-password' as Href,
+  editGoals: '/(protected)/profile/edit-goals' as Href,
+  workoutHistory: '/(protected)/workout/history' as Href,
+  savedPrograms: '/(protected)/programs/saved' as Href,
 } as const;
 
 export function programDetail(id: string): Href {

@@ -18,7 +18,15 @@ export function MuscleGroupChart({ data, mostTrained }: MuscleGroupChartProps) {
   const stroke = 18;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  let offset = 0;
+
+  const slices = data.reduce<
+    { name: string; color: string; percent: number; dash: number; offset: number }[]
+  >((acc, slice) => {
+    const dash = (slice.percent / 100) * circumference;
+    const offset = acc.reduce((sum, s) => sum + s.dash, 0);
+    acc.push({ ...slice, dash, offset });
+    return acc;
+  }, []);
 
   return (
     <View style={styles.wrap}>
@@ -39,26 +47,21 @@ export function MuscleGroupChart({ data, mostTrained }: MuscleGroupChartProps) {
               strokeWidth={stroke}
               fill="none"
             />
-            {data.map((slice) => {
-              const dash = (slice.percent / 100) * circumference;
-              const circle = (
-                <Circle
-                  key={slice.name}
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  stroke={slice.color}
-                  strokeWidth={stroke}
-                  fill="none"
-                  strokeDasharray={`${dash} ${circumference - dash}`}
-                  strokeDashoffset={-offset}
-                  rotation="-90"
-                  origin={`${size / 2}, ${size / 2}`}
-                />
-              );
-              offset += dash;
-              return circle;
-            })}
+            {slices.map((slice) => (
+              <Circle
+                key={slice.name}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke={slice.color}
+                strokeWidth={stroke}
+                fill="none"
+                strokeDasharray={`${slice.dash} ${circumference - slice.dash}`}
+                strokeDashoffset={-slice.offset}
+                rotation="-90"
+                origin={`${size / 2}, ${size / 2}`}
+              />
+            ))}
           </Svg>
           <View style={styles.centerLabel}>
             <Text style={styles.centerSmall}>Most Trained</Text>

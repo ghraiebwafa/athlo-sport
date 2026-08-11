@@ -1,4 +1,4 @@
-import { ChevronRight, LucideIcon, LogOut } from 'lucide-react-native';
+import { ChevronRight, LucideIcon } from 'lucide-react-native';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 
@@ -25,6 +25,8 @@ export function SettingsMenu({ items, onSelect }: SettingsMenuProps) {
             key={item.id}
             style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             onPress={() => onSelect(item.id)}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
           >
             <Icon color={color} size={20} />
             <Text style={[styles.label, item.destructive && styles.destructive]}>{item.label}</Text>

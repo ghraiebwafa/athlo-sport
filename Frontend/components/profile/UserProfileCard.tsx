@@ -1,4 +1,4 @@
-import { ChevronRight, Crown, LucideIcon } from 'lucide-react-native';
+import { ChevronRight, Crown } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 import { memberLabel } from '@/lib/profileHelpers';

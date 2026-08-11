@@ -3,7 +3,6 @@ import { Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthHeader } from '@/components/auth/AuthHeader';
-import { SocialLogin } from '@/components/auth/SocialLogin';
 import { BackgroundScreen } from '@/components/ui/BackgroundScreen';
 import { Button } from '@/components/ui/Button';
 import { FormErrorBanner } from '@/components/ui/FormErrorBanner';
@@ -108,7 +107,6 @@ export default function LoginScreen() {
           </View>
           <FormErrorBanner message={error} />
           <Button title="Sign In" onPress={handleLogin} loading={loading} />
-          <SocialLogin />
           <Text style={styles.footer}>
             Don&apos;t have an account?{' '}
             <Link href={ROUTES.register} style={styles.footerLink}>Create Account</Link>

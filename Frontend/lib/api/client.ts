@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { handleUnauthorized, isAuthEndpoint } from '@/lib/authSession';
 import { refreshAccessTokenLocked } from '@/lib/authRefresh';
 import { config } from '@/lib/config';
@@ -33,7 +33,7 @@ authApi.interceptors.request.use(attachToken);
 managementApi.interceptors.request.use(attachToken);
 
 let isRefreshing = false;
-let refreshQueue: Array<(token: string | null) => void> = [];
+let refreshQueue: ((token: string | null) => void)[] = [];
 
 function processQueue(token: string | null) {
   refreshQueue.forEach((cb) => cb(token));

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Bell } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,11 +14,13 @@ import { CategoryCard } from '@/components/programs/CategoryCard';
 import { FeaturedProgramCard } from '@/components/programs/FeaturedProgramCard';
 import { PopularWorkoutRow } from '@/components/programs/PopularWorkoutRow';
 import { SearchBar } from '@/components/programs/SearchBar';
+import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { ROUTES } from '@/lib/routes';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getCategories, getPrograms } from '@/lib/api/programs';
 import { getActiveWorkout } from '@/lib/api/workouts';
+import type { ProgramListItem } from '@/lib/types';
 
 export default function ProgramsScreen() {
   const [search, setSearch] = useState('');
@@ -46,6 +48,11 @@ export default function ProgramsScreen() {
   const featured = filtered.find((p) => p.isFeatured) ?? filtered[0];
   const popular = filtered.filter((p) => p.id !== featured?.id);
 
+  const renderItem = useCallback(
+    ({ item }: { item: ProgramListItem }) => <PopularWorkoutRow program={item} />,
+    []
+  );
+
   if (programsQuery.isLoading || categoriesQuery.isLoading) {
     return (
       <View style={styles.centered}>
@@ -56,9 +63,10 @@ export default function ProgramsScreen() {
 
   if (programsQuery.isError) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{getApiErrorMessage(programsQuery.error)}</Text>
-      </View>
+      <QueryState
+        message={getApiErrorMessage(programsQuery.error)}
+        onRetry={() => void programsQuery.refetch()}
+      />
     );
   }
 
@@ -67,59 +75,77 @@ export default function ProgramsScreen() {
   const categoriesError = categoriesQuery.isError ? getApiErrorMessage(categoriesQuery.error) : null;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {categoriesError ? (
-        <View style={styles.categoriesBanner}>
-          <Text style={styles.categoriesBannerText}>Categories unavailable: {categoriesError}</Text>
-        </View>
-      ) : null}
-      <View style={styles.header}>
-        <Text style={styles.heading}>Programs</Text>
-        <Pressable style={styles.bell} hitSlop={8}>
-          <Bell color={theme.colors.text} size={22} />
-          <View style={styles.bellDot} />
-        </Pressable>
-      </View>
-
-      {active ? (
-        <Pressable style={styles.activeBanner} onPress={() => router.push(ROUTES.activeWorkout)}>
-          <Text style={styles.activeTitle}>Workout in progress</Text>
-          <Text style={styles.activeSubtitle}>{active.programName}</Text>
-        </Pressable>
-      ) : null}
-
-      <SearchBar value={search} onChangeText={setSearch} />
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Categories</Text>
-        <Pressable onPress={() => setCategoryId(null)}>
-          <Text style={styles.link}>View All</Text>
-        </Pressable>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
-        {categories.map((cat) => (
-          <CategoryCard
-            key={cat.id}
-            category={cat}
-            selected={categoryId === cat.id}
-            onPress={() => setCategoryId((id) => (id === cat.id ? null : cat.id))}
-          />
-        ))}
-      </ScrollView>
-
-      {featured ? <FeaturedProgramCard program={featured} /> : null}
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Popular Workouts</Text>
-        <Text style={styles.link}>{popular.length} programs</Text>
-      </View>
-
-      {popular.length > 0 ? (
-        popular.map((p) => <PopularWorkoutRow key={p.id} program={p} />)
-      ) : (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={popular}
+      keyExtractor={(item) => item.id}
+      renderItem={renderItem}
+      ListEmptyComponent={
         <Text style={styles.empty}>No programs match your search.</Text>
-      )}
-    </ScrollView>
+      }
+      ListHeaderComponent={
+        <View>
+          {categoriesError ? (
+            <View style={styles.categoriesBanner}>
+              <Text style={styles.categoriesBannerText}>Categories unavailable: {categoriesError}</Text>
+            </View>
+          ) : null}
+          <View style={styles.header}>
+            <Text style={styles.heading}>Programs</Text>
+            <Pressable
+              onPress={() => router.push(ROUTES.savedPrograms)}
+              accessibilityRole="button"
+              accessibilityLabel="Open saved programs"
+            >
+              <Text style={styles.link}>Saved</Text>
+            </Pressable>
+          </View>
+
+          {active ? (
+            <Pressable
+              style={styles.activeBanner}
+              onPress={() => router.push(ROUTES.activeWorkout)}
+              accessibilityRole="button"
+              accessibilityLabel={`Resume workout ${active.programName}`}
+            >
+              <Text style={styles.activeTitle}>Workout in progress</Text>
+              <Text style={styles.activeSubtitle}>{active.programName}</Text>
+            </Pressable>
+          ) : null}
+
+          <SearchBar value={search} onChangeText={setSearch} />
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <Pressable
+              onPress={() => setCategoryId(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Clear category filter"
+            >
+              <Text style={styles.link}>Clear</Text>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
+            {categories.map((cat) => (
+              <CategoryCard
+                key={cat.id}
+                category={cat}
+                selected={categoryId === cat.id}
+                onPress={() => setCategoryId((id) => (id === cat.id ? null : cat.id))}
+              />
+            ))}
+          </ScrollView>
+
+          {featured ? <FeaturedProgramCard program={featured} /> : null}
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular Workouts</Text>
+            <Text style={styles.link}>{popular.length} programs</Text>
+          </View>
+        </View>
+      }
+    />
   );
 }
 
@@ -134,16 +160,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   heading: { fontSize: 28, fontWeight: '700', color: theme.colors.text },
-  bell: { position: 'relative', padding: 4 },
-  bellDot: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.primary,
-  },
   activeBanner: {
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.md,
@@ -172,5 +188,4 @@ const styles = StyleSheet.create({
   },
   categoriesBannerText: { color: theme.colors.error, fontSize: 13 },
   empty: { color: theme.colors.textMuted, textAlign: 'center', marginTop: theme.spacing.lg },
-  error: { color: theme.colors.error },
 });

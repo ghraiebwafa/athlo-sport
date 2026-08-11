@@ -59,6 +59,7 @@ export default function ProgramDetailScreen() {
     if (!id) return;
     const next = await toggleSavedProgram(id);
     setSaved(next);
+    await queryClient.invalidateQueries({ queryKey: ['savedPrograms'] });
     Alert.alert(next ? 'Saved' : 'Removed', next ? 'Program saved for later.' : 'Program removed from saved.');
   };
 

@@ -58,6 +58,18 @@ export interface ProgramDetail extends Omit<ProgramListItem, 'exerciseCount' | '
   exercises: ProgramExercise[];
 }
 
+export interface WorkoutSetLog {
+  id: string;
+  programExerciseId: string;
+  exerciseId: string;
+  exerciseName: string;
+  setNumber: number;
+  repsCompleted: number;
+  weightKg?: number;
+  completed: boolean;
+  loggedAt: string;
+}
+
 export interface WorkoutSession {
   id: string;
   programId: string;
@@ -67,6 +79,23 @@ export interface WorkoutSession {
   caloriesBurned?: number;
   status: WorkoutSessionStatus;
   durationMinutes?: number;
+  sets?: WorkoutSetLog[];
+}
+
+export interface LiftPersonalRecord {
+  exerciseId: string;
+  exerciseName: string;
+  weightKg: number;
+  reps: number;
+  achievedAt: string;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 export interface ProgressData {
@@ -85,6 +114,7 @@ export interface ProgressData {
     caloriesBurned: number;
     durationMinutes: number;
   }[];
+  personalRecords?: LiftPersonalRecord[];
 }
 
 export interface ApiErrorDetail {

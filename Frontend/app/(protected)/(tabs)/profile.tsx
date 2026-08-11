@@ -1,17 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import {
-  Bell,
+  Bookmark,
   Calendar,
   Crown,
   Dumbbell,
   Flame,
   HelpCircle,
+  KeyRound,
   Lock,
   LogOut,
   Scale,
   Settings,
   Trophy,
+  UserRound,
   Zap,
 } from 'lucide-react-native';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -21,6 +23,7 @@ import { OverviewGrid, OverviewTile } from '@/components/profile/OverviewGrid';
 import { PersonalRecordsSection } from '@/components/profile/PersonalRecordsSection';
 import { SettingsMenu, showComingSoon } from '@/components/profile/SettingsMenu';
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
+import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { ROUTES } from '@/lib/routes';
 import { getProfile, logout } from '@/lib/api/auth';
@@ -32,8 +35,11 @@ import { getTokens, useAuthStore } from '@/stores/authStore';
 
 const menuItems = [
   { id: 'history', label: 'Workout History', icon: Calendar },
+  { id: 'saved', label: 'Saved Programs', icon: Bookmark },
+  { id: 'editProfile', label: 'Edit Profile', icon: UserRound },
+  { id: 'changePassword', label: 'Change Password', icon: KeyRound },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'notifications', label: 'Notifications', icon: Settings },
   { id: 'privacy', label: 'Privacy & Security', icon: Lock },
   { id: 'subscription', label: 'Subscription', icon: Crown },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
@@ -77,7 +83,19 @@ export default function ProfileScreen() {
       return;
     }
     if (id === 'history') {
-      router.push(ROUTES.progress);
+      router.push(ROUTES.workoutHistory);
+      return;
+    }
+    if (id === 'saved') {
+      router.push(ROUTES.savedPrograms);
+      return;
+    }
+    if (id === 'editProfile') {
+      router.push(ROUTES.editProfile);
+      return;
+    }
+    if (id === 'changePassword') {
+      router.push(ROUTES.changePassword);
       return;
     }
     const labels: Record<string, string> = {
@@ -100,9 +118,13 @@ export default function ProfileScreen() {
 
   if (!display) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>Could not load profile.</Text>
-      </View>
+      <QueryState
+        message="Could not load profile."
+        onRetry={() => {
+          void profileQuery.refetch();
+          void progressQuery.refetch();
+        }}
+      />
     );
   }
 
@@ -113,14 +135,20 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.heading}>Profile</Text>
-        <Pressable style={styles.settingsBtn} onPress={() => showComingSoon('Settings')} hitSlop={8}>
+        <Pressable
+          style={styles.settingsBtn}
+          onPress={() => router.push(ROUTES.editProfile)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Edit profile"
+        >
           <Settings color={theme.colors.text} size={22} />
         </Pressable>
       </View>
 
-      <UserProfileCard user={display} />
+      <UserProfileCard user={display} onPress={() => router.push(ROUTES.editProfile)} />
 
-      <GoalCard user={display} />
+      <GoalCard user={display} onEdit={() => router.push(ROUTES.editGoals)} />
 
       {progress ? (
         <OverviewGrid>
@@ -185,6 +213,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  error: { color: theme.colors.error },
   errorHint: { color: theme.colors.textMuted, textAlign: 'center', fontSize: 12 },
 });
