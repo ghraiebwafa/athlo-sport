@@ -19,6 +19,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: athlo-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    # No host port by default. For local debugging: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d redis
+    volumes:
+      - athlo_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   auth-service:
     build:
       context: ./Backend
@@ -28,10 +42,13 @@ services:
       - .env
     environment:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-athlo};Username=${POSTGRES_USER:-athlo};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: ${ConnectionStrings__Redis:-redis:6379}
     ports:
       - "5001:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
@@ -49,10 +66,13 @@ services:
       - .env
     environment:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-athlo};Username=${POSTGRES_USER:-athlo};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: ${ConnectionStrings__Redis:-redis:6379}
     ports:
       - "5000:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       auth-service:
         condition: service_healthy
@@ -65,3 +85,4 @@ services:
 
 volumes:
   athlo_pgdata:
+  athlo_redis:

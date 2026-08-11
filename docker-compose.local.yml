@@ -1,9 +1,15 @@
 # Optional override when running APIs with `dotnet run` on the host.
-# Usage: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d postgres
+# Usage: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d postgres redis
 #
-# Then set in .env: POSTGRES_PORT=15432
+# Then set in .env:
+#   POSTGRES_PORT=15432
+#   ConnectionStrings__Redis=localhost:16379
 
 services:
   postgres:
     ports:
       - "127.0.0.1:15432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:16379:6379"
