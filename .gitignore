@@ -47,3 +47,5 @@ TestResults/
 # Docker
 docker-compose.override.yml
 
+.vscode/
+**/.vscode/
