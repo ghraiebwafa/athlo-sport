@@ -1,0 +1,15 @@
+{
+  "extends": "./Frontend/tsconfig.json",
+  "include": [
+    "Frontend/**/*.ts",
+    "Frontend/**/*.tsx",
+    "Frontend/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "Frontend/node_modules",
+    "Frontend/.expo",
+    "Frontend/dist",
+    "Frontend/**/__tests__/**",
+    "Backend"
+  ]
+}
