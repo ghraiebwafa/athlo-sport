@@ -54,6 +54,14 @@ public class WorkoutsController(
         return Ok(await workoutService.CancelAsync(User.GetUserId(), request.SessionId, ct));
     }
 
+    [HttpPost("{sessionId:guid}/pause")]
+    public async Task<ActionResult<WorkoutSessionDto>> Pause(Guid sessionId, CancellationToken ct) =>
+        Ok(await workoutService.PauseAsync(User.GetUserId(), sessionId, ct));
+
+    [HttpPost("{sessionId:guid}/resume")]
+    public async Task<ActionResult<WorkoutSessionDto>> Resume(Guid sessionId, CancellationToken ct) =>
+        Ok(await workoutService.ResumeAsync(User.GetUserId(), sessionId, ct));
+
     [HttpPost("{sessionId:guid}/sets")]
     public async Task<ActionResult<WorkoutSetLogDto>> LogSet(
         Guid sessionId, [FromBody] LogSetRequest request, CancellationToken ct)

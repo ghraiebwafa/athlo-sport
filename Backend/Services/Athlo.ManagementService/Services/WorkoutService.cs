@@ -66,12 +66,15 @@ public class WorkoutService(
 
         EnsureOwnedInProgress(session, userId);
 
+        var completedAt = DateTime.UtcNow;
+        WorkoutMapper.FinalizeOpenPause(session, completedAt);
+
         var program = session.Program ?? await programRepository.GetByIdAsync(session.ProgramId, ct);
         var maxCalories = (program?.EstimatedCalories ?? 500) * MaxCaloriesMultiplier;
         if (caloriesBurned < 0 || caloriesBurned > maxCalories)
             throw new AppException($"Calories burned must be between 0 and {maxCalories}.", 400);
 
-        session.CompletedAt = DateTime.UtcNow;
+        session.CompletedAt = completedAt;
         session.CaloriesBurned = caloriesBurned;
         session.Status = WorkoutSessionStatus.Completed;
 
@@ -88,9 +91,45 @@ public class WorkoutService(
 
         EnsureOwnedInProgress(session, userId);
 
+        var cancelledAt = DateTime.UtcNow;
+        WorkoutMapper.FinalizeOpenPause(session, cancelledAt);
         session.Status = WorkoutSessionStatus.Cancelled;
-        session.CompletedAt = DateTime.UtcNow;
+        session.CompletedAt = cancelledAt;
 
+        await sessionRepository.UpdateAsync(session, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        return WorkoutMapper.ToDto(session);
+    }
+
+    public async Task<WorkoutSessionDto> PauseAsync(Guid userId, Guid sessionId, CancellationToken ct = default)
+    {
+        var session = await sessionRepository.GetByIdAsync(sessionId, ct)
+            ?? throw new NotFoundException("Workout session not found.");
+
+        EnsureOwnedInProgress(session, userId);
+
+        if (session.PausedAt is not null)
+            throw new ConflictException("This workout is already paused.");
+
+        session.PausedAt = DateTime.UtcNow;
+        await sessionRepository.UpdateAsync(session, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        return WorkoutMapper.ToDto(session);
+    }
+
+    public async Task<WorkoutSessionDto> ResumeAsync(Guid userId, Guid sessionId, CancellationToken ct = default)
+    {
+        var session = await sessionRepository.GetByIdAsync(sessionId, ct)
+            ?? throw new NotFoundException("Workout session not found.");
+
+        EnsureOwnedInProgress(session, userId);
+
+        if (session.PausedAt is null)
+            throw new ConflictException("This workout is not paused.");
+
+        WorkoutMapper.FinalizeOpenPause(session, DateTime.UtcNow);
         await sessionRepository.UpdateAsync(session, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
