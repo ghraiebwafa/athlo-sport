@@ -7,6 +7,7 @@ const PRESETS = [60, 90, 120] as const;
 interface RestTimerProps {
   remainingSeconds: number;
   paused?: boolean;
+  title?: string;
   onSkip: () => void;
   onAddSeconds: (seconds: number) => void;
   onSetDuration: (seconds: number) => void;
@@ -15,13 +16,17 @@ interface RestTimerProps {
 export function RestTimer({
   remainingSeconds,
   paused,
+  title = 'Rest',
   onSkip,
   onAddSeconds,
   onSetDuration,
 }: RestTimerProps) {
   return (
-    <View style={styles.card} accessibilityRole="timer" accessibilityLabel={`Rest ${remainingSeconds} seconds`}>
-      <Text style={styles.label}>Rest{paused ? ' · Paused' : ''}</Text>
+    <View style={styles.card} accessibilityRole="timer" accessibilityLabel={`${title} ${remainingSeconds} seconds`}>
+      <Text style={styles.label}>
+        {title}
+        {paused ? ' · Paused' : ''}
+      </Text>
       <Text style={styles.time}>{formatMmSs(remainingSeconds)}</Text>
 
       <View style={styles.presets}>
