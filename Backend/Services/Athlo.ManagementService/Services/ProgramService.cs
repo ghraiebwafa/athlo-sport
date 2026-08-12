@@ -11,7 +11,8 @@ namespace Athlo.ManagementService.Services;
 public class ProgramService(
     IProgramRepository programRepository,
     ICategoryRepository categoryRepository,
-    IUnitOfWork unitOfWork) : IProgramService
+    IUnitOfWork unitOfWork,
+    ILogger<ProgramService> logger) : IProgramService
 {
     public async Task<IReadOnlyList<ProgramListItemDto>> GetAllAsync(CancellationToken ct = default)
     {
@@ -57,6 +58,8 @@ public class ProgramService(
         await programRepository.AddAsync(program, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Program created ProgramId={ProgramId} Name={Name}", program.Id, program.Name);
+
         var created = await programRepository.GetByIdAsync(program.Id, ct);
         return ProgramMapper.ToDetail(created!);
     }
@@ -83,6 +86,8 @@ public class ProgramService(
             ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Program updated ProgramId={ProgramId} Name={Name}", id, program.Name);
+
         var updated = await programRepository.GetByIdAsync(id, ct);
         return ProgramMapper.ToDetail(updated!);
     }
@@ -97,6 +102,8 @@ public class ProgramService(
 
         await programRepository.DeleteAsync(program, ct);
         await unitOfWork.SaveChangesAsync(ct);
+
+        logger.LogInformation("Program deleted ProgramId={ProgramId}", id);
     }
 
     private async Task ValidateProgramRequestAsync(

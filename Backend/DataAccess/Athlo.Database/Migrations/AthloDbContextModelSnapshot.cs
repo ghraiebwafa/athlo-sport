@@ -288,6 +288,12 @@ namespace Athlo.Database.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("PausedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PausedDurationSeconds")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("ProgramId")
                         .HasColumnType("uuid");
 

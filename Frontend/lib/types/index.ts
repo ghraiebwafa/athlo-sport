@@ -123,6 +123,9 @@ export interface WorkoutSession {
   caloriesBurned?: number;
   status: WorkoutSessionStatus;
   durationMinutes?: number;
+  pausedAt?: string | null;
+  pausedDurationSeconds?: number;
+  isPaused?: boolean;
   sets?: WorkoutSetLog[];
 }
 
@@ -171,6 +174,8 @@ export interface ApiErrorResponse {
     error: {
       code: string;
       message: string;
+      traceId?: string;
+      timestamp?: string;
       details?: ApiErrorDetail[];
     };
   };

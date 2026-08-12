@@ -28,7 +28,8 @@ public class AuthService(
     IEmailSender emailSender,
     IWebHostEnvironment environment,
     IConfiguration configuration,
-    LoginAttemptLimiter loginAttemptLimiter) : IAuthService
+    LoginAttemptLimiter loginAttemptLimiter,
+    ILogger<AuthService> logger) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtOptions.Value;
     private readonly string _superAdminEmail = superAdminOptions.Value.Email.Trim().ToLowerInvariant();
@@ -59,6 +60,8 @@ public class AuthService(
         await userRepository.AddAsync(user, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("User registered UserId={UserId} Email={Email}", user.Id, email);
+
         return await CreateAuthResponseAsync(user, ct);
     }
 
@@ -73,16 +76,19 @@ public class AuthService(
         if (user is null)
         {
             loginAttemptLimiter.RecordFailure(email);
+            logger.LogWarning("Login failed for unknown or invalid credentials Email={Email}", email);
             throw new UnauthorizedException("Invalid email or password.");
         }
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             loginAttemptLimiter.RecordFailure(email);
+            logger.LogWarning("Login failed invalid password UserId={UserId} Email={Email}", user.Id, email);
             throw new UnauthorizedException("Invalid email or password.");
         }
 
         loginAttemptLimiter.Reset(email);
+        logger.LogInformation("User logged in UserId={UserId} Email={Email} Role={Role}", user.Id, email, user.Role);
         return await CreateAuthResponseAsync(user, ct);
     }
 
@@ -129,6 +135,7 @@ public class AuthService(
         {
             await refreshTokenRepository.RevokeAsync(stored, ct);
             await unitOfWork.SaveChangesAsync(ct);
+            logger.LogInformation("User logged out UserId={UserId}", userId);
         }
     }
 

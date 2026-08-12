@@ -32,7 +32,7 @@ import {
   formatHms,
   formatMmSs,
 } from '@/lib/workoutTimer';
-import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet } from '@/lib/api/workouts';
+import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet, pauseWorkout, resumeWorkout } from '@/lib/api/workouts';
 import { ROUTES } from '@/lib/routes';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
@@ -49,15 +49,13 @@ export default function ActiveWorkoutScreen() {
   const queryClient = useQueryClient();
   const setSummary = useWorkoutCompleteStore((s) => s.setSummary);
   const [now, setNow] = useState(() => Date.now());
-  const [paused, setPaused] = useState(false);
-  const pausedAtRef = useRef<number | null>(null);
-  const [pausedTotal, setPausedTotal] = useState(0);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restRemaining, setRestRemaining] = useState<number | null>(null);
   const [lastRestDuration, setLastRestDuration] = useState(DEFAULT_REST_SECONDS);
   const [awaitingNextExercise, setAwaitingNextExercise] = useState(false);
   const awaitingNextRef = useRef(false);
   const exerciseCountRef = useRef(0);
+  const [indexSessionId, setIndexSessionId] = useState<string | null>(null);
   const [manualHr, setManualHr] = useState('');
   const heartRateSource = usePreferencesStore((s) => s.heartRateSource);
 
@@ -77,6 +75,33 @@ export default function ActiveWorkoutScreen() {
     [programQuery.data?.exercises]
   );
   const loggedSets = useMemo(() => session?.sets ?? EMPTY_SETS, [session?.sets]);
+  const paused = !!(session?.pausedAt || session?.isPaused);
+
+  if (session?.id && exercises.length > 0 && indexSessionId !== session.id) {
+    let index = 0;
+    for (let i = 0; i < exercises.length; i++) {
+      const done = loggedSets.filter(
+        (s) => s.programExerciseId === exercises[i].id && s.completed
+      ).length;
+      if (done < exercises[i].sets) {
+        index = i;
+        break;
+      }
+      index = i;
+    }
+    setExerciseIndex(index);
+    setIndexSessionId(session.id);
+  }
+
+  const activeElapsedSeconds = useMemo(() => {
+    if (!session) return 0;
+    const wall = elapsedSeconds(session.startedAt, now);
+    let pausedSec = session.pausedDurationSeconds ?? 0;
+    if (session.pausedAt) {
+      pausedSec += Math.max(0, Math.floor((now - new Date(session.pausedAt).getTime()) / 1000));
+    }
+    return Math.max(0, wall - pausedSec);
+  }, [session, now]);
 
   useEffect(() => {
     exerciseCountRef.current = exercises.length;
@@ -129,7 +154,7 @@ export default function ActiveWorkoutScreen() {
     onSuccess: (data, calories) => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
-      const elapsed = elapsedSeconds(session!.startedAt, now) - pausedTotal;
+      const elapsed = activeElapsedSeconds;
       void setSummary({
         sessionId: data.id,
         programName: data.programName,
@@ -155,6 +180,17 @@ export default function ActiveWorkoutScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       router.replace(ROUTES.home);
+    },
+    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+  });
+
+  const pauseMutation = useMutation({
+    mutationFn: () => {
+      if (!session) return Promise.reject(new Error('No active workout'));
+      return paused ? resumeWorkout(session.id) : pauseWorkout(session.id);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['activeWorkout'], data);
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
@@ -192,7 +228,7 @@ export default function ActiveWorkoutScreen() {
 
   const metrics = useMemo(() => {
     if (!session) return null;
-    const elapsed = elapsedSeconds(session.startedAt, now) - pausedTotal;
+    const elapsed = activeElapsedSeconds;
     const durationMin = programQuery.data?.durationMinutes ?? 30;
     const targetCal = programQuery.data?.estimatedCalories ?? 300;
     const totalSec = durationMin * 60;
@@ -206,7 +242,7 @@ export default function ActiveWorkoutScreen() {
       heartRate: estimateHeartRate(elapsed),
       intensity: estimateIntensity(progress),
     };
-  }, [session, now, programQuery.data, pausedTotal]);
+  }, [session, activeElapsedSeconds, programQuery.data]);
 
   const exerciseState = useMemo(() => {
     if (exercises.length === 0) {
@@ -229,16 +265,8 @@ export default function ActiveWorkoutScreen() {
   }, [exercises, exerciseIndex, loggedSets]);
 
   const togglePause = () => {
-    if (paused) {
-      if (pausedAtRef.current) {
-        setPausedTotal((prev) => prev + Math.floor((Date.now() - pausedAtRef.current!) / 1000));
-        pausedAtRef.current = null;
-      }
-      setPaused(false);
-    } else {
-      pausedAtRef.current = Date.now();
-      setPaused(true);
-    }
+    if (pauseMutation.isPending) return;
+    pauseMutation.mutate();
   };
 
   const handleBack = () => {

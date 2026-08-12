@@ -17,18 +17,34 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
         catch (AppException ex)
         {
-            logger.LogWarning(ex, "Application error [{Code}]: {Message}", MapCode(ex.StatusCode), ex.Message);
-            await WriteErrorAsync(context, ex.StatusCode, MapCode(ex.StatusCode), ex.Message);
+            var code = MapCode(ex.StatusCode);
+            logger.LogWarning(
+                ex,
+                "Application error {ErrorCode} ({StatusCode}) TraceId={TraceId}: {Message}",
+                code,
+                ex.StatusCode,
+                context.TraceIdentifier,
+                ex.Message);
+            await WriteErrorAsync(context, ex.StatusCode, code, ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Unauthorized access");
+            logger.LogWarning(
+                ex,
+                "Unauthorized access TraceId={TraceId}",
+                context.TraceIdentifier);
             await WriteErrorAsync(context, StatusCodes.Status401Unauthorized, ApiErrorCodes.Unauthorized, "Unauthorized.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception");
-            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, ApiErrorCodes.InternalError,
+            logger.LogError(
+                ex,
+                "Unhandled exception TraceId={TraceId}",
+                context.TraceIdentifier);
+            await WriteErrorAsync(
+                context,
+                StatusCodes.Status500InternalServerError,
+                ApiErrorCodes.InternalError,
                 "An unexpected error occurred.");
         }
     }
@@ -41,7 +57,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        var payload = ApiErrorFactory.Create(code, message);
+        var payload = ApiErrorFactory.Create(code, message, traceId: context.TraceIdentifier);
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));
     }
 

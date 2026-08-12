@@ -12,5 +12,8 @@ public class WorkoutSessionDto
     public int? CaloriesBurned { get; set; }
     public WorkoutSessionStatus Status { get; set; }
     public int? DurationMinutes { get; set; }
+    public DateTime? PausedAt { get; set; }
+    public int PausedDurationSeconds { get; set; }
+    public bool IsPaused { get; set; }
     public IReadOnlyList<WorkoutSetLogDto> Sets { get; set; } = [];
 }

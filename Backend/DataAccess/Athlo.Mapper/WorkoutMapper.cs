@@ -17,8 +17,11 @@ public static class WorkoutMapper
             CaloriesBurned = session.CaloriesBurned,
             Status = session.Status,
             DurationMinutes = session.CompletedAt.HasValue
-                ? (int)Math.Round((session.CompletedAt.Value - session.StartedAt).TotalMinutes)
+                ? (int)Math.Round(ActiveDuration(session, session.CompletedAt.Value).TotalMinutes)
                 : null,
+            PausedAt = session.PausedAt,
+            PausedDurationSeconds = session.PausedDurationSeconds,
+            IsPaused = session.PausedAt is not null,
             Sets = session.SetLogs?
                 .OrderBy(s => s.LoggedAt)
                 .Select(ToSetDto)
@@ -47,7 +50,26 @@ public static class WorkoutMapper
             CompletedAt = session.CompletedAt ?? session.StartedAt,
             CaloriesBurned = session.CaloriesBurned ?? 0,
             DurationMinutes = session.CompletedAt.HasValue
-                ? (int)Math.Round((session.CompletedAt.Value - session.StartedAt).TotalMinutes)
+                ? (int)Math.Round(ActiveDuration(session, session.CompletedAt.Value).TotalMinutes)
                 : 0
         };
+
+    public static void FinalizeOpenPause(WorkoutSession session, DateTime asOfUtc)
+    {
+        if (session.PausedAt is null)
+            return;
+
+        session.PausedDurationSeconds += (int)Math.Max(0, (asOfUtc - session.PausedAt.Value).TotalSeconds);
+        session.PausedAt = null;
+    }
+
+    public static TimeSpan ActiveDuration(WorkoutSession session, DateTime asOfUtc)
+    {
+        var pausedSeconds = session.PausedDurationSeconds;
+        if (session.PausedAt is DateTime pausedAt)
+            pausedSeconds += (int)Math.Max(0, (asOfUtc - pausedAt).TotalSeconds);
+
+        var wallSeconds = Math.Max(0, (asOfUtc - session.StartedAt).TotalSeconds);
+        return TimeSpan.FromSeconds(Math.Max(0, wallSeconds - pausedSeconds));
+    }
 }

@@ -27,7 +27,8 @@ public class ValidationFilter : IActionFilter
         var response = ApiErrorFactory.Create(
             ApiErrorCodes.ValidationFailed,
             "One or more validation errors occurred.",
-            details);
+            details,
+            context.HttpContext.TraceIdentifier);
 
         context.Result = new JsonResult(response, JsonOptions) { StatusCode = StatusCodes.Status400BadRequest };
     }

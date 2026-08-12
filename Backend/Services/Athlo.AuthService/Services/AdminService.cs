@@ -16,7 +16,8 @@ public class AdminService(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IUnitOfWork unitOfWork,
-    IOptions<SuperAdminSettings> superAdminOptions) : IAdminService
+    IOptions<SuperAdminSettings> superAdminOptions,
+    ILogger<AdminService> logger) : IAdminService
 {
     private readonly string _superAdminEmail = superAdminOptions.Value.Email.Trim().ToLowerInvariant();
 
@@ -52,6 +53,8 @@ public class AdminService(
         await userRepository.AddAsync(admin, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Admin created AdminId={AdminId} Email={Email}", admin.Id, email);
+
         return AdminMapper.ToDto(admin);
     }
 
@@ -70,6 +73,8 @@ public class AdminService(
         await userRepository.UpdateAsync(user, ct);
         await refreshTokenRepository.RevokeAllForUserAsync(user.Id, ct);
         await unitOfWork.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin demoted to user AdminId={AdminId} Email={Email}", user.Id, user.Email);
     }
 
     public async Task<PagedResult<UserListItemDto>> GetUsersAsync(int page, int pageSize, CancellationToken ct = default)
