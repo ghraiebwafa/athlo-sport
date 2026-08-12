@@ -13,7 +13,8 @@ namespace Athlo.ManagementService.Services;
 public class WorkoutService(
     IWorkoutSessionRepository sessionRepository,
     IProgramRepository programRepository,
-    IUnitOfWork unitOfWork) : IWorkoutService
+    IUnitOfWork unitOfWork,
+    ILogger<WorkoutService> logger) : IWorkoutService
 {
     private const int MaxCaloriesMultiplier = 2;
     private const int MaxSetNumber = 50;
@@ -23,6 +24,8 @@ public class WorkoutService(
     public async Task<WorkoutSessionDto?> GetActiveAsync(Guid userId, CancellationToken ct = default)
     {
         var active = await sessionRepository.GetActiveSessionAsync(userId, ct);
+        if (active is null)
+            logger.LogDebug("No active workout for user {UserId}", userId);
         return active is null ? null : WorkoutMapper.ToDto(active);
     }
 
@@ -55,6 +58,9 @@ public class WorkoutService(
             throw new ConflictException("You already have an active workout session.");
         }
 
+        logger.LogInformation("Workout started SessionId={SessionId} UserId={UserId} ProgramId={ProgramId}",
+            session.Id, userId, programId);
+
         var created = await sessionRepository.GetByIdAsync(session.Id, ct);
         return WorkoutMapper.ToDto(created!);
     }
@@ -81,6 +87,10 @@ public class WorkoutService(
         await sessionRepository.UpdateAsync(session, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation(
+            "Workout completed SessionId={SessionId} UserId={UserId} Calories={Calories} PausedSeconds={PausedSeconds}",
+            sessionId, userId, caloriesBurned, session.PausedDurationSeconds);
+
         return WorkoutMapper.ToDto(session);
     }
 
@@ -99,6 +109,8 @@ public class WorkoutService(
         await sessionRepository.UpdateAsync(session, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Workout cancelled SessionId={SessionId} UserId={UserId}", sessionId, userId);
+
         return WorkoutMapper.ToDto(session);
     }
 
@@ -116,6 +128,8 @@ public class WorkoutService(
         await sessionRepository.UpdateAsync(session, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Workout paused SessionId={SessionId} UserId={UserId}", sessionId, userId);
+
         return WorkoutMapper.ToDto(session);
     }
 
@@ -132,6 +146,10 @@ public class WorkoutService(
         WorkoutMapper.FinalizeOpenPause(session, DateTime.UtcNow);
         await sessionRepository.UpdateAsync(session, ct);
         await unitOfWork.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Workout resumed SessionId={SessionId} UserId={UserId} PausedSeconds={PausedSeconds}",
+            sessionId, userId, session.PausedDurationSeconds);
 
         return WorkoutMapper.ToDto(session);
     }
@@ -189,6 +207,10 @@ public class WorkoutService(
             throw new ConflictException("This set was already logged.");
         }
 
+        logger.LogInformation(
+            "Set logged SessionId={SessionId} ProgramExerciseId={ProgramExerciseId} SetNumber={SetNumber}",
+            sessionId, request.ProgramExerciseId, request.SetNumber);
+
         var saved = await sessionRepository.GetSetLogAsync(log.Id, ct);
         return WorkoutMapper.ToSetDto(saved!);
     }
@@ -238,6 +260,7 @@ public class WorkoutService(
     public Task<int> CancelStaleSessionsAsync(TimeSpan maxAge, CancellationToken ct = default)
     {
         var cutoff = DateTime.UtcNow.Subtract(maxAge);
+        logger.LogInformation("Cancelling stale workouts older than {Cutoff:o}", cutoff);
         return sessionRepository.CancelStaleSessionsAsync(cutoff, ct);
     }
 

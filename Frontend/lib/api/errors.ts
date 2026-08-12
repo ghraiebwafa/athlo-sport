@@ -6,6 +6,7 @@ export interface ParsedApiError {
   message: string;
   fieldErrors: Record<string, string>;
   code?: string;
+  traceId?: string;
 }
 
 function fieldErrorsFromDetails(details?: { field: string; message: string }[]) {
@@ -94,6 +95,7 @@ export function parseApiError(error: unknown): ParsedApiError {
     message,
     fieldErrors,
     code: apiError?.code,
+    traceId: apiError?.traceId,
   };
 }
 

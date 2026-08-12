@@ -27,7 +27,8 @@ public static class RateLimitingExtensions
                 context.HttpContext.Response.ContentType = "application/json";
                 var payload = ApiErrorFactory.Create(
                     ApiErrorCodes.RateLimited,
-                    "Too many requests. Please try again later.");
+                    "Too many requests. Please try again later.",
+                    traceId: context.HttpContext.TraceIdentifier);
                 await context.HttpContext.Response.WriteAsJsonAsync(payload);
             };
 

@@ -174,6 +174,8 @@ export interface ApiErrorResponse {
     error: {
       code: string;
       message: string;
+      traceId?: string;
+      timestamp?: string;
       details?: ApiErrorDetail[];
     };
   };

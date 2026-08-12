@@ -1,5 +1,8 @@
 namespace Athlo.Shared.Models;
 
+/// <summary>
+/// Standard API error envelope: { "api": { "error": { ... } } }.
+/// </summary>
 public class ApiErrorResponse
 {
     public ApiErrorContainer Api { get; set; } = new();
@@ -14,6 +17,8 @@ public class ApiError
 {
     public string Code { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public string? TraceId { get; set; }
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
     public IReadOnlyList<ApiErrorDetail> Details { get; set; } = [];
 }
 
