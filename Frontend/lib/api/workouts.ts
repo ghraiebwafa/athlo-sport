@@ -24,6 +24,16 @@ export async function cancelWorkout(sessionId: string) {
   return data;
 }
 
+export async function pauseWorkout(sessionId: string) {
+  const { data } = await managementApi.post<WorkoutSession>(`/api/workouts/${sessionId}/pause`);
+  return data;
+}
+
+export async function resumeWorkout(sessionId: string) {
+  const { data } = await managementApi.post<WorkoutSession>(`/api/workouts/${sessionId}/resume`);
+  return data;
+}
+
 export async function logWorkoutSet(
   sessionId: string,
   payload: {

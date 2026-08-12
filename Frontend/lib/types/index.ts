@@ -123,6 +123,9 @@ export interface WorkoutSession {
   caloriesBurned?: number;
   status: WorkoutSessionStatus;
   durationMinutes?: number;
+  pausedAt?: string | null;
+  pausedDurationSeconds?: number;
+  isPaused?: boolean;
   sets?: WorkoutSetLog[];
 }
 
