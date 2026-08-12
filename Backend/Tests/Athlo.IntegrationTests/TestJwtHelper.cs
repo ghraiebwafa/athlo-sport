@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using Athlo.Models.Entities;
 using Athlo.Shared.Enums;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Athlo.IntegrationTests;
@@ -34,19 +36,31 @@ public static class TestJwtHelper
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public static User CreateTestUser(string email)
+    public static User CreateTestUser(string email, UserRole role = UserRole.User)
     {
         return new User
         {
             Id = Guid.NewGuid(),
-            FullName = "Integration User",
+            FullName = $"{role} Integration User",
             Email = email,
             PasswordHash = "hash",
             InitialWeight = 70,
             CurrentWeight = 70,
             GoalWeight = 65,
             FitnessGoal = FitnessGoal.LoseWeight,
-            Role = UserRole.User
+            Role = role
         };
+    }
+
+    public static HttpClient CreateAuthorizedClient<TEntryPoint>(
+        WebApplicationFactory<TEntryPoint> factory,
+        UserRole role)
+        where TEntryPoint : class
+    {
+        var client = factory.CreateClient();
+        var user = CreateTestUser($"{role.ToString().ToLowerInvariant()}_{Guid.NewGuid():N}@test.local", role);
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", CreateAccessToken(user));
+        return client;
     }
 }
