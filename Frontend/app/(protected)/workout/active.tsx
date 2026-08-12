@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Activity, ChevronLeft, Flame, Heart, Timer } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +37,13 @@ import { ROUTES } from '@/lib/routes';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
 
+const EMPTY_EXERCISES: NonNullable<
+  Awaited<ReturnType<typeof getProgram>>['exercises']
+> = [];
+const EMPTY_SETS: NonNullable<
+  NonNullable<Awaited<ReturnType<typeof getActiveWorkout>>>['sets']
+> = [];
+
 export default function ActiveWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -48,7 +55,9 @@ export default function ActiveWorkoutScreen() {
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restRemaining, setRestRemaining] = useState<number | null>(null);
   const [lastRestDuration, setLastRestDuration] = useState(DEFAULT_REST_SECONDS);
-  const [pendingAdvance, setPendingAdvance] = useState(false);
+  const [awaitingNextExercise, setAwaitingNextExercise] = useState(false);
+  const awaitingNextRef = useRef(false);
+  const exerciseCountRef = useRef(0);
   const [manualHr, setManualHr] = useState('');
   const heartRateSource = usePreferencesStore((s) => s.heartRateSource);
 
@@ -63,40 +72,57 @@ export default function ActiveWorkoutScreen() {
     enabled: !!session?.programId,
   });
 
+  const exercises = useMemo(
+    () => programQuery.data?.exercises ?? EMPTY_EXERCISES,
+    [programQuery.data?.exercises]
+  );
+  const loggedSets = useMemo(() => session?.sets ?? EMPTY_SETS, [session?.sets]);
+
+  useEffect(() => {
+    exerciseCountRef.current = exercises.length;
+  }, [exercises.length]);
+
   useEffect(() => {
     if (!session || paused) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [session, paused]);
 
-  const exercises = programQuery.data?.exercises ?? [];
-  const loggedSets = session?.sets ?? [];
+  const finishRest = useCallback(() => {
+    const shouldAdvance = awaitingNextRef.current;
+    awaitingNextRef.current = false;
+    setAwaitingNextExercise(false);
+    setRestRemaining(null);
+    if (shouldAdvance) {
+      setExerciseIndex((i) => Math.min(exerciseCountRef.current - 1, i + 1));
+    }
+  }, []);
 
-  const isResting = restRemaining != null;
   useEffect(() => {
-    if (!isResting || paused) return;
-    const timer = setInterval(() => {
-      setRestRemaining((prev) => {
-        if (prev == null || prev <= 1) return null;
-        return prev - 1;
-      });
+    if (restRemaining == null || paused) return;
+    const timer = setTimeout(() => {
+      if (restRemaining <= 1) {
+        finishRest();
+        return;
+      }
+      setRestRemaining(restRemaining - 1);
     }, 1000);
-    return () => clearInterval(timer);
-  }, [isResting, paused]);
+    return () => clearTimeout(timer);
+  }, [restRemaining, paused, finishRest]);
 
-  useEffect(() => {
-    if (isResting || !pendingAdvance) return;
-    setPendingAdvance(false);
-    setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1));
-  }, [isResting, pendingAdvance, exercises.length]);
-
-  const startRest = (seconds = lastRestDuration) => {
+  const startRest = (seconds = lastRestDuration, advanceAfter = false) => {
     const next = Math.max(1, seconds);
+    awaitingNextRef.current = advanceAfter;
+    setAwaitingNextExercise(advanceAfter);
     setLastRestDuration(next);
     setRestRemaining(next);
   };
 
-  const endRest = () => setRestRemaining(null);
+  const clearRestWithoutAdvance = () => {
+    awaitingNextRef.current = false;
+    setAwaitingNextExercise(false);
+    setRestRemaining(null);
+  };
 
   const completeMutation = useMutation({
     mutationFn: (calories: number) => completeWorkout(session!.id, calories),
@@ -158,8 +184,7 @@ export default function ActiveWorkoutScreen() {
 
       const hasNext = exerciseIdx >= 0 && exerciseIdx < exercises.length - 1;
       if (hasNext) {
-        setPendingAdvance(true);
-        startRest();
+        startRest(lastRestDuration, true);
       }
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
@@ -354,12 +379,12 @@ export default function ActiveWorkoutScreen() {
               <RestTimer
                 remainingSeconds={restRemaining}
                 paused={paused}
-                title={pendingAdvance ? 'Rest · Next exercise' : 'Rest'}
-                onSkip={endRest}
+                title={awaitingNextExercise ? 'Rest · Next exercise' : 'Rest'}
+                onSkip={finishRest}
                 onAddSeconds={(seconds) =>
                   setRestRemaining((prev) => (prev == null ? seconds : prev + seconds))
                 }
-                onSetDuration={(seconds) => startRest(seconds)}
+                onSetDuration={(seconds) => startRest(seconds, awaitingNextRef.current)}
               />
             ) : (
               <SetLogger
@@ -376,8 +401,7 @@ export default function ActiveWorkoutScreen() {
                   title="Previous"
                   variant="secondary"
                   onPress={() => {
-                    setPendingAdvance(false);
-                    endRest();
+                    clearRestWithoutAdvance();
                     setExerciseIndex((i) => Math.max(0, i - 1));
                   }}
                   disabled={exerciseIndex <= 0}
@@ -386,8 +410,7 @@ export default function ActiveWorkoutScreen() {
                   title="Next exercise"
                   variant="secondary"
                   onPress={() => {
-                    setPendingAdvance(false);
-                    endRest();
+                    clearRestWithoutAdvance();
                     setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1));
                   }}
                   disabled={exerciseIndex >= exercises.length - 1}
