@@ -11,6 +11,9 @@ public interface IProgramRepository
     Task<bool> AllExercisesExistAsync(IReadOnlyCollection<Guid> exerciseIds, CancellationToken ct = default);
     Task<bool> HasWorkoutSessionsAsync(Guid programId, CancellationToken ct = default);
     Task AddAsync(WorkoutProgram program, CancellationToken ct = default);
-    Task UpdateAsync(WorkoutProgram program, CancellationToken ct = default);
+    Task ReplaceExercisesAsync(
+        Guid programId,
+        IReadOnlyList<ProgramExercise> exercises,
+        CancellationToken ct = default);
     Task DeleteAsync(WorkoutProgram program, CancellationToken ct = default);
 }
