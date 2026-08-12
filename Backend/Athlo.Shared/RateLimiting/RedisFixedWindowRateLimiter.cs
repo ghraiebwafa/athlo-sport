@@ -10,18 +10,21 @@ public sealed class RedisFixedWindowRateLimiter : RateLimiter
     private readonly string _key;
     private readonly int _permitLimit;
     private readonly TimeSpan _window;
+    private readonly bool _failOpen;
     private int _disposed;
 
     public RedisFixedWindowRateLimiter(
         IConnectionMultiplexer redis,
         string partitionKey,
         int permitLimit,
-        TimeSpan window)
+        TimeSpan window,
+        bool failOpen = false)
     {
         _redis = redis;
         _key = $"rl:{partitionKey}";
         _permitLimit = permitLimit;
         _window = window;
+        _failOpen = failOpen;
     }
 
     public override TimeSpan? IdleDuration => null;
@@ -44,8 +47,9 @@ public sealed class RedisFixedWindowRateLimiter : RateLimiter
         }
         catch
         {
-            // Fail open on Redis errors so the API stays available.
-            return new RedisRateLimitLease(true);
+            // Default fail-closed: Redis outage must not bypass throttling.
+            // Set RateLimiting:FailOpen=true only when availability > abuse protection.
+            return new RedisRateLimitLease(_failOpen);
         }
     }
 
