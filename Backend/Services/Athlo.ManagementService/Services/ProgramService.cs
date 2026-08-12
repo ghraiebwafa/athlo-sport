@@ -77,11 +77,10 @@ public class ProgramService(
         program.IsFeatured = request.IsFeatured;
         program.CategoryId = request.CategoryId;
 
-        program.ProgramExercises.Clear();
-        foreach (var exercise in BuildProgramExercises(program.Id, request.Exercises))
-            program.ProgramExercises.Add(exercise);
-
-        await programRepository.UpdateAsync(program, ct);
+        await programRepository.ReplaceExercisesAsync(
+            program.Id,
+            BuildProgramExercises(program.Id, request.Exercises),
+            ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         var updated = await programRepository.GetByIdAsync(id, ct);

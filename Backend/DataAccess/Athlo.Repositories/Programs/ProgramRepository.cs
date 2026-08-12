@@ -47,10 +47,32 @@ public class ProgramRepository(AthloDbContext context) : IProgramRepository
     public async Task AddAsync(WorkoutProgram program, CancellationToken ct = default) =>
         await context.WorkoutPrograms.AddAsync(program, ct);
 
-    public Task UpdateAsync(WorkoutProgram program, CancellationToken ct = default)
+    public async Task ReplaceExercisesAsync(
+        Guid programId,
+        IReadOnlyList<ProgramExercise> exercises,
+        CancellationToken ct = default)
     {
-        context.WorkoutPrograms.Update(program);
-        return Task.CompletedTask;
+        var existing = await context.ProgramExercises
+            .Where(pe => pe.ProgramId == programId)
+            .ToListAsync(ct);
+
+        if (existing.Count > 0)
+        {
+            context.ProgramExercises.RemoveRange(existing);
+
+            // Keep any tracked parent navigation in sync so EF does not try to
+            // update orphaned children on the next SaveChanges.
+            var trackedParent = context.ChangeTracker
+                .Entries<WorkoutProgram>()
+                .Select(e => e.Entity)
+                .FirstOrDefault(p => p.Id == programId);
+            trackedParent?.ProgramExercises.Clear();
+
+            // Flush deletes before inserts so unique (ProgramId, OrderIndex) stays valid.
+            await context.SaveChangesAsync(ct);
+        }
+
+        await context.ProgramExercises.AddRangeAsync(exercises, ct);
     }
 
     public Task DeleteAsync(WorkoutProgram program, CancellationToken ct = default)
