@@ -161,7 +161,7 @@ public class WorkoutService(
             ?? throw new NotFoundException("Set log not found.");
 
         if (log.Session.UserId != userId)
-            throw new ForbiddenException("You do not have access to this workout session.");
+            throw new NotFoundException("Set log not found.");
 
         if (log.Session.Status != WorkoutSessionStatus.InProgress)
             throw new ConflictException(GetInactiveSessionMessage(log.Session.Status));
@@ -204,8 +204,9 @@ public class WorkoutService(
 
     private static void EnsureOwnedInProgress(WorkoutSession session, Guid userId)
     {
+        // 404 (not 403) so session existence cannot be probed across users.
         if (session.UserId != userId)
-            throw new ForbiddenException("You do not have access to this workout session.");
+            throw new NotFoundException("Workout session not found.");
 
         if (session.Status != WorkoutSessionStatus.InProgress)
             throw new ConflictException(GetInactiveSessionMessage(session.Status));

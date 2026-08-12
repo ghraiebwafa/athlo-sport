@@ -47,12 +47,27 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
             using var scope = app.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AthloDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
-            await context.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied.");
+
+            // AuthService (DataSeeder) owns MigrateAsync to avoid dual-migrator races.
+            if (!await context.Database.CanConnectAsync())
+                throw new InvalidOperationException("Cannot connect to the database.");
+
+            var pending = (await context.Database.GetPendingMigrationsAsync()).ToList();
+            if (pending.Count > 0)
+            {
+                logger.LogWarning(
+                    "Database has {Count} pending migration(s). Start AuthService first so DataSeeder can apply them: {Migrations}",
+                    pending.Count,
+                    string.Join(", ", pending));
+            }
+            else
+            {
+                logger.LogInformation("Database schema is up to date.");
+            }
         }
         catch (Exception ex)
         {
-            Serilog.Log.Fatal(ex, "Database migration failed");
+            Serilog.Log.Fatal(ex, "Database startup check failed");
             throw;
         }
     }
