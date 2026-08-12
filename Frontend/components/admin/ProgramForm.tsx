@@ -126,6 +126,7 @@ export function ProgramForm({
 }: ProgramFormProps) {
   const [values, setValues] = useState<ProgramFormValues>(initial);
   const [localError, setLocalError] = useState('');
+  const [searchByRow, setSearchByRow] = useState<Record<string, string>>({});
 
   const update = (patch: Partial<ProgramFormValues>) => setValues((v) => ({ ...v, ...patch }));
 
@@ -270,19 +271,46 @@ export function ProgramForm({
           </View>
 
           <Text style={styles.label}>Exercise</Text>
+          {row.exerciseId ? (
+            <Text style={styles.selectedExercise}>
+              Selected: {exercises.find((e) => e.id === row.exerciseId)?.name ?? 'Unknown'}
+            </Text>
+          ) : null}
+          <Input
+            label="Search exercises"
+            value={searchByRow[row.key] ?? ''}
+            onChangeText={(text) => setSearchByRow((prev) => ({ ...prev, [row.key]: text }))}
+            placeholder="Type to filter…"
+            autoCapitalize="none"
+          />
           <View style={styles.chips}>
-            {exercises.map((e) => (
-              <Pressable
-                key={e.id}
-                style={[styles.chip, row.exerciseId === e.id && styles.chipActive]}
-                onPress={() => updateRow(row.key, { exerciseId: e.id })}
-              >
-                <Text style={[styles.chipText, row.exerciseId === e.id && styles.chipTextActive]}>
-                  {e.name}
-                </Text>
-              </Pressable>
-            ))}
+            {exercises
+              .filter((e) => {
+                const q = (searchByRow[row.key] ?? '').trim().toLowerCase();
+                if (!q) return true;
+                return e.name.toLowerCase().includes(q);
+              })
+              .slice(0, 24)
+              .map((e) => (
+                <Pressable
+                  key={e.id}
+                  style={[styles.chip, row.exerciseId === e.id && styles.chipActive]}
+                  onPress={() => {
+                    updateRow(row.key, { exerciseId: e.id });
+                    setSearchByRow((prev) => ({ ...prev, [row.key]: '' }));
+                  }}
+                >
+                  <Text style={[styles.chipText, row.exerciseId === e.id && styles.chipTextActive]}>
+                    {e.name}
+                  </Text>
+                </Pressable>
+              ))}
           </View>
+          {(searchByRow[row.key] ?? '').trim() &&
+          exercises.filter((e) => e.name.toLowerCase().includes((searchByRow[row.key] ?? '').trim().toLowerCase()))
+            .length === 0 ? (
+            <Text style={styles.emptySearch}>No exercises match that search.</Text>
+          ) : null}
 
           <View style={styles.rowInputs}>
             <View style={styles.third}>
@@ -366,4 +394,6 @@ const styles = StyleSheet.create({
   exerciseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   exerciseIndex: { color: theme.colors.primary, fontWeight: '700' },
   exerciseActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  selectedExercise: { color: theme.colors.text, fontSize: 13, fontWeight: '600' },
+  emptySearch: { color: theme.colors.textMuted, fontSize: 12 },
 });

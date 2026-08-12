@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Activity, ChevronLeft, Flame, Heart, Timer } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,10 +9,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CurrentExerciseCard } from '@/components/workout/CurrentExerciseCard';
+import { RestTimer, DEFAULT_REST_SECONDS } from '@/components/workout/RestTimer';
 import { SetLogger } from '@/components/workout/SetLogger';
 import { UpNextCard } from '@/components/workout/UpNextCard';
 import { WorkoutControls } from '@/components/workout/WorkoutControls';
@@ -32,7 +34,15 @@ import {
 } from '@/lib/workoutTimer';
 import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet } from '@/lib/api/workouts';
 import { ROUTES } from '@/lib/routes';
+import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
+
+const EMPTY_EXERCISES: NonNullable<
+  Awaited<ReturnType<typeof getProgram>>['exercises']
+> = [];
+const EMPTY_SETS: NonNullable<
+  NonNullable<Awaited<ReturnType<typeof getActiveWorkout>>>['sets']
+> = [];
 
 export default function ActiveWorkoutScreen() {
   const insets = useSafeAreaInsets();
@@ -43,6 +53,13 @@ export default function ActiveWorkoutScreen() {
   const pausedAtRef = useRef<number | null>(null);
   const [pausedTotal, setPausedTotal] = useState(0);
   const [exerciseIndex, setExerciseIndex] = useState(0);
+  const [restRemaining, setRestRemaining] = useState<number | null>(null);
+  const [lastRestDuration, setLastRestDuration] = useState(DEFAULT_REST_SECONDS);
+  const [awaitingNextExercise, setAwaitingNextExercise] = useState(false);
+  const awaitingNextRef = useRef(false);
+  const exerciseCountRef = useRef(0);
+  const [manualHr, setManualHr] = useState('');
+  const heartRateSource = usePreferencesStore((s) => s.heartRateSource);
 
   const { data: session, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['activeWorkout'],
@@ -55,14 +72,57 @@ export default function ActiveWorkoutScreen() {
     enabled: !!session?.programId,
   });
 
+  const exercises = useMemo(
+    () => programQuery.data?.exercises ?? EMPTY_EXERCISES,
+    [programQuery.data?.exercises]
+  );
+  const loggedSets = useMemo(() => session?.sets ?? EMPTY_SETS, [session?.sets]);
+
+  useEffect(() => {
+    exerciseCountRef.current = exercises.length;
+  }, [exercises.length]);
+
   useEffect(() => {
     if (!session || paused) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [session, paused]);
 
-  const exercises = programQuery.data?.exercises ?? [];
-  const loggedSets = session?.sets ?? [];
+  const finishRest = useCallback(() => {
+    const shouldAdvance = awaitingNextRef.current;
+    awaitingNextRef.current = false;
+    setAwaitingNextExercise(false);
+    setRestRemaining(null);
+    if (shouldAdvance) {
+      setExerciseIndex((i) => Math.min(exerciseCountRef.current - 1, i + 1));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (restRemaining == null || paused) return;
+    const timer = setTimeout(() => {
+      if (restRemaining <= 1) {
+        finishRest();
+        return;
+      }
+      setRestRemaining(restRemaining - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [restRemaining, paused, finishRest]);
+
+  const startRest = (seconds = lastRestDuration, advanceAfter = false) => {
+    const next = Math.max(1, seconds);
+    awaitingNextRef.current = advanceAfter;
+    setAwaitingNextExercise(advanceAfter);
+    setLastRestDuration(next);
+    setRestRemaining(next);
+  };
+
+  const clearRestWithoutAdvance = () => {
+    awaitingNextRef.current = false;
+    setAwaitingNextExercise(false);
+    setRestRemaining(null);
+  };
 
   const completeMutation = useMutation({
     mutationFn: (calories: number) => completeWorkout(session!.id, calories),
@@ -75,7 +135,10 @@ export default function ActiveWorkoutScreen() {
         programName: data.programName,
         durationSeconds: data.durationMinutes ? data.durationMinutes * 60 : elapsed,
         caloriesBurned: data.caloriesBurned ?? calories,
-        avgHeartRate: estimateHeartRate(elapsed),
+        avgHeartRate:
+          heartRateSource === 'manual' && Number(manualHr) > 0
+            ? Number(manualHr)
+            : estimateHeartRate(elapsed),
         intensityPercent: estimateIntensity(
           Math.min(100, (elapsed / Math.max(1, (programQuery.data?.durationMinutes ?? 30) * 60)) * 100)
         ),
@@ -103,9 +166,26 @@ export default function ActiveWorkoutScreen() {
       repsCompleted: number;
       weightKg?: number;
     }) => logWorkoutSet(session!.id, input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
+
+      const exerciseIdx = exercises.findIndex((e) => e.id === variables.programExerciseId);
+      const exercise = exerciseIdx >= 0 ? exercises[exerciseIdx] : undefined;
+      const completedForExercise =
+        loggedSets.filter((s) => s.programExerciseId === variables.programExerciseId && s.completed)
+          .length + 1;
+      const exerciseFinished = exercise ? completedForExercise >= exercise.sets : false;
+
+      if (!exerciseFinished) {
+        startRest();
+        return;
+      }
+
+      const hasNext = exerciseIdx >= 0 && exerciseIdx < exercises.length - 1;
+      if (hasNext) {
+        startRest(lastRestDuration, true);
+      }
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
@@ -240,9 +320,13 @@ export default function ActiveWorkoutScreen() {
           <WorkoutStatChip
             icon={Heart}
             iconColor={theme.colors.red}
-            value={String(metrics.heartRate)}
+            value={
+              heartRateSource === 'manual' && manualHr.trim()
+                ? manualHr.trim()
+                : String(metrics.heartRate)
+            }
             unit="BPM"
-            label="Heart Rate (est.)"
+            label={heartRateSource === 'manual' ? 'Heart Rate' : 'Heart Rate (est.)'}
             valueColor={theme.colors.red}
           />
           <WorkoutStatChip
@@ -269,6 +353,21 @@ export default function ActiveWorkoutScreen() {
           />
         </View>
 
+        {heartRateSource === 'manual' ? (
+          <View style={styles.hrRow}>
+            <Text style={styles.hrLabel}>Manual BPM</Text>
+            <TextInput
+              style={styles.hrInput}
+              keyboardType="number-pad"
+              value={manualHr}
+              onChangeText={setManualHr}
+              placeholder={String(metrics.heartRate)}
+              placeholderTextColor={theme.colors.textMuted}
+              accessibilityLabel="Manual heart rate"
+            />
+          </View>
+        ) : null}
+
         {exerciseState.current ? (
           <>
             <CurrentExerciseCard
@@ -276,25 +375,44 @@ export default function ActiveWorkoutScreen() {
               setLabel={exerciseState.setLabel}
               repProgress={exerciseState.repProgress}
             />
-            <SetLogger
-              key={exerciseState.current.id}
-              exercise={exerciseState.current}
-              loggedSets={currentLogs}
-              busy={logSetMutation.isPending}
-              onLogSet={(input) => logSetMutation.mutate(input)}
-            />
+            {restRemaining != null && restRemaining > 0 ? (
+              <RestTimer
+                remainingSeconds={restRemaining}
+                paused={paused}
+                title={awaitingNextExercise ? 'Rest · Next exercise' : 'Rest'}
+                onSkip={finishRest}
+                onAddSeconds={(seconds) =>
+                  setRestRemaining((prev) => (prev == null ? seconds : prev + seconds))
+                }
+                onSetDuration={(seconds) => startRest(seconds, awaitingNextRef.current)}
+              />
+            ) : (
+              <SetLogger
+                key={exerciseState.current.id}
+                exercise={exerciseState.current}
+                loggedSets={currentLogs}
+                busy={logSetMutation.isPending}
+                onLogSet={(input) => logSetMutation.mutate(input)}
+              />
+            )}
             {exercises.length > 1 ? (
               <View style={styles.navRow}>
                 <Button
                   title="Previous"
                   variant="secondary"
-                  onPress={() => setExerciseIndex((i) => Math.max(0, i - 1))}
+                  onPress={() => {
+                    clearRestWithoutAdvance();
+                    setExerciseIndex((i) => Math.max(0, i - 1));
+                  }}
                   disabled={exerciseIndex <= 0}
                 />
                 <Button
                   title="Next exercise"
                   variant="secondary"
-                  onPress={() => setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1))}
+                  onPress={() => {
+                    clearRestWithoutAdvance();
+                    setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1));
+                  }}
                   disabled={exerciseIndex >= exercises.length - 1}
                 />
               </View>
@@ -343,6 +461,27 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   navRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.md },
+  hrRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  hrLabel: { color: theme.colors.textMuted, fontWeight: '600', flex: 1 },
+  hrInput: {
+    minWidth: 80,
+    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'right',
+    paddingVertical: 6,
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',

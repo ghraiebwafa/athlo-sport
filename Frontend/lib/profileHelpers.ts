@@ -63,18 +63,24 @@ export interface PersonalRecord {
   label: string;
   value: string;
   color: string;
+  achievedAt?: string;
 }
 
 const PR_COLORS = ['#007AFF', '#FF9500', '#34C759', '#AF52DE', '#FF2D55'];
 
-export function buildPersonalRecords(progress: ProgressData): PersonalRecord[] {
+export function buildPersonalRecords(progress: ProgressData, limit = 5): PersonalRecord[] {
+  return buildAllPersonalRecords(progress).slice(0, limit);
+}
+
+export function buildAllPersonalRecords(progress: ProgressData): PersonalRecord[] {
   const liftRecords = progress.personalRecords ?? [];
   if (liftRecords.length > 0) {
-    return liftRecords.slice(0, 5).map((record, index) => ({
+    return liftRecords.map((record, index) => ({
       id: record.exerciseId,
       label: record.exerciseName,
       value: `${formatWeight(record.weightKg)} kg × ${record.reps}`,
       color: PR_COLORS[index % PR_COLORS.length],
+      achievedAt: record.achievedAt,
     }));
   }
 

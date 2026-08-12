@@ -5,6 +5,7 @@ import {
   FolderTree,
   LayoutDashboard,
   ListChecks,
+  Shield,
   Users,
 } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -64,6 +65,23 @@ export default function AdminHubScreen() {
                 </View>
               )}
             </View>
+          ) : null}
+
+          {isSuperAdmin ? (
+            <Pressable
+              style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+              onPress={() => router.push(ROUTES.adminAdmins)}
+              accessibilityRole="button"
+              accessibilityLabel="Manage admins"
+            >
+              <View style={styles.tileIcon}>
+                <Shield color={theme.colors.primary} size={22} />
+              </View>
+              <View style={styles.tileBody}>
+                <Text style={styles.tileLabel}>Admins</Text>
+                <Text style={styles.tileHint}>Create and remove admin accounts</Text>
+              </View>
+            </Pressable>
           ) : null}
 
           {tiles.map((tile) => {

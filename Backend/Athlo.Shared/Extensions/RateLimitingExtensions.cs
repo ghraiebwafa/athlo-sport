@@ -31,11 +31,13 @@ public static class RateLimitingExtensions
                 await context.HttpContext.Response.WriteAsJsonAsync(payload);
             };
 
+            var failOpen = configuration.GetValue("RateLimiting:FailOpen", false);
+
             options.AddPolicy("auth", httpContext =>
-                CreatePartition(httpContext, "auth", permitLimit: 10));
+                CreatePartition(httpContext, "auth", permitLimit: 10, failOpen));
 
             options.AddPolicy("api", httpContext =>
-                CreatePartition(httpContext, "api", permitLimit: 100));
+                CreatePartition(httpContext, "api", permitLimit: 100, failOpen));
         });
 
         return services;
@@ -44,7 +46,8 @@ public static class RateLimitingExtensions
     private static RateLimitPartition<string> CreatePartition(
         HttpContext httpContext,
         string policy,
-        int permitLimit)
+        int permitLimit,
+        bool failOpen)
     {
         var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var key = $"{policy}:{ip}";
@@ -55,7 +58,8 @@ public static class RateLimitingExtensions
         {
             return RateLimitPartition.Get(
                 key,
-                partitionKey => new RedisFixedWindowRateLimiter(redis, partitionKey, permitLimit, window));
+                partitionKey => new RedisFixedWindowRateLimiter(
+                    redis, partitionKey, permitLimit, window, failOpen));
         }
 
         return RateLimitPartition.GetFixedWindowLimiter(

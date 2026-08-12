@@ -1,16 +1,22 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '@/constants/theme';
 import type { PersonalRecord } from '@/lib/profileHelpers';
 
 interface PersonalRecordsSectionProps {
   records: PersonalRecord[];
+  onViewAll?: () => void;
 }
 
-export function PersonalRecordsSection({ records }: PersonalRecordsSectionProps) {
+export function PersonalRecordsSection({ records, onViewAll }: PersonalRecordsSectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.title}>Personal Records</Text>
+        {onViewAll ? (
+          <Pressable onPress={onViewAll} accessibilityRole="button" accessibilityLabel="View all personal records">
+            <Text style={styles.link}>View All</Text>
+          </Pressable>
+        ) : null}
       </View>
       {records.length === 0 ? (
         <Text style={styles.empty}>Log weighted sets to unlock lift PRs.</Text>
@@ -35,6 +41,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: theme.spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
   title: { color: theme.colors.text, fontWeight: '700', fontSize: 16 },
+  link: { color: theme.colors.primary, fontWeight: '600', fontSize: 13 },
   empty: { color: theme.colors.textMuted, fontSize: 13, marginBottom: theme.spacing.sm },
   row: {
     flexDirection: 'row',
