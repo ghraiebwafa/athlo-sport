@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Athlo.Models.DTOs.Auth;
 using Athlo.Shared.Enums;
@@ -27,7 +28,14 @@ public class PasswordResetApiTests(AuthWebApplicationFactory factory)
             GoalWeight = 65,
             FitnessGoal = FitnessGoal.LoseWeight
         });
+        var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>(TestJsonOptions.Default);
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
+        var accessToken = auth!.AccessToken;
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var profileBeforeReset = await _client.GetAsync("/api/auth/profile");
+        Assert.Equal(HttpStatusCode.OK, profileBeforeReset.StatusCode);
+        _client.DefaultRequestHeaders.Authorization = null;
 
         var forgotResponse = await _client.PostAsJsonAsync("/api/auth/forgot-password", new ForgotPasswordRequest
         {
@@ -45,6 +53,11 @@ public class PasswordResetApiTests(AuthWebApplicationFactory factory)
             ConfirmNewPassword = newPassword
         });
         Assert.Equal(HttpStatusCode.NoContent, resetResponse.StatusCode);
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var profileAfterReset = await _client.GetAsync("/api/auth/profile");
+        Assert.Equal(HttpStatusCode.Unauthorized, profileAfterReset.StatusCode);
+        _client.DefaultRequestHeaders.Authorization = null;
 
         var oldLogin = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequest
         {

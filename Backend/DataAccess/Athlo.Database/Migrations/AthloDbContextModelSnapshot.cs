@@ -217,6 +217,9 @@ namespace Athlo.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PreferencesJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

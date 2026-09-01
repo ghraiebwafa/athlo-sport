@@ -19,7 +19,8 @@ public class AuthController(
     IValidator<ChangePasswordRequest> changePasswordValidator,
     IValidator<ForgotPasswordRequest> forgotPasswordValidator,
     IValidator<ResetPasswordRequest> resetPasswordValidator,
-    IValidator<UpdateProfileRequest> updateProfileValidator) : ControllerBase
+    IValidator<UpdateProfileRequest> updateProfileValidator,
+    IValidator<UserPreferencesDto> preferencesValidator) : ControllerBase
 {
     [HttpPost("register")]
     [AllowAnonymous]
@@ -77,6 +78,23 @@ public class AuthController(
         if (error is not null) return error;
 
         return Ok(await authService.UpdateProfileAsync(User.GetUserId(), request, ct));
+    }
+
+    [HttpGet("preferences")]
+    [Authorize]
+    public async Task<ActionResult<UserPreferencesDto>> GetPreferences(CancellationToken ct) =>
+        Ok(await authService.GetPreferencesAsync(User.GetUserId(), ct));
+
+    [HttpPut("preferences")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePreferences(
+        [FromBody] UserPreferencesDto request,
+        CancellationToken ct)
+    {
+        var error = await preferencesValidator.ToValidationErrorAsync(request, HttpContext, ct);
+        if (error is not null) return error;
+
+        return Ok(await authService.UpdatePreferencesAsync(User.GetUserId(), request, ct));
     }
 
     [HttpPost("change-password")]

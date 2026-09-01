@@ -6,6 +6,11 @@ import type { UserProfile } from '@/lib/types';
 
 const STORAGE_KEY = 'athlo_auth';
 
+async function syncPreferencesFromServer() {
+  const { usePreferencesStore } = await import('@/stores/preferencesStore');
+  await usePreferencesStore.getState().syncFromServer();
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -36,6 +41,7 @@ export async function setTokens(session: AuthTokens) {
     isAuthenticated: true,
     isLoading: false,
   });
+  void syncPreferencesFromServer();
 }
 
 export async function clearTokens() {
@@ -72,6 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       cachedTokens = activeSession;
       set({ user: activeSession.user, isAuthenticated: true, isLoading: false });
+      void syncPreferencesFromServer();
     } catch {
       await removeItem(STORAGE_KEY);
       cachedTokens = null;

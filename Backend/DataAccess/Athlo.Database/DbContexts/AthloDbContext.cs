@@ -70,6 +70,9 @@ public class AthloDbContext : DbContext
             entity.Property(u => u.CreatedAt)
                 .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
+            entity.Property(u => u.PreferencesJson)
+                .HasColumnType("jsonb");
+
             entity.HasIndex(u => u.Email).IsUnique();
         });
     }

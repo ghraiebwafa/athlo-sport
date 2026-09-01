@@ -1,4 +1,5 @@
 import { authApi } from '@/lib/api/client';
+import type { UserPreferencesResponse } from '@/lib/types/preferences';
 import type { AuthResponse, FitnessGoal, UserProfile } from '@/lib/types';
 
 export interface LoginPayload {
@@ -67,4 +68,14 @@ export async function resetPassword(token: string, newPassword: string, confirmN
 
 export async function logout(refreshToken: string) {
   await authApi.post('/api/auth/logout', { refreshToken });
+}
+
+export async function getUserPreferences() {
+  const { data } = await authApi.get<UserPreferencesResponse>('/api/auth/preferences');
+  return data;
+}
+
+export async function updateUserPreferences(preferences: UserPreferencesResponse) {
+  const { data } = await authApi.put<UserPreferencesResponse>('/api/auth/preferences', preferences);
+  return data;
 }

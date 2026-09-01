@@ -186,6 +186,30 @@ public class AuthService(
         return UserMapper.ToProfileResponse(user);
     }
 
+    public async Task<UserPreferencesDto> GetPreferencesAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await userRepository.GetByIdAsync(userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        return UserPreferencesHelper.Parse(user.PreferencesJson);
+    }
+
+    public async Task<UserPreferencesDto> UpdatePreferencesAsync(
+        Guid userId,
+        UserPreferencesDto request,
+        CancellationToken ct = default)
+    {
+        var user = await userRepository.GetByIdAsync(userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        var normalized = UserPreferencesHelper.Normalize(request);
+        user.PreferencesJson = UserPreferencesHelper.Serialize(normalized);
+        await userRepository.UpdateAsync(user, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        return normalized;
+    }
+
     public async Task ChangePasswordAsync(
         Guid userId,
         ChangePasswordRequest request,
@@ -261,6 +285,7 @@ public class AuthService(
         stored.User.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         await passwordResetTokenRepository.MarkUsedAsync(stored, ct);
         await refreshTokenRepository.RevokeAllForUserAsync(stored.UserId, ct);
+        accessTokenRevocation.RevokeAllForUser(stored.UserId);
         await userRepository.UpdateAsync(stored.User, ct);
         await unitOfWork.SaveChangesAsync(ct);
     }

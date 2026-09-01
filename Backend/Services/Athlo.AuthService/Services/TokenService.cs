@@ -15,11 +15,13 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
 
     public (string AccessToken, DateTime ExpiresAt, string Jti) GenerateAccessToken(User user)
     {
-        var expiresAt = DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpirationMinutes);
+        var issuedAt = DateTime.UtcNow;
+        var expiresAt = issuedAt.AddMinutes(_settings.AccessTokenExpirationMinutes);
         var jti = Guid.NewGuid().ToString();
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Jti, jti),
+            new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(issuedAt).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.FullName),
@@ -33,6 +35,7 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
             issuer: _settings.Issuer,
             audience: _settings.Audience,
             claims: claims,
+            notBefore: issuedAt,
             expires: expiresAt,
             signingCredentials: credentials);
 
