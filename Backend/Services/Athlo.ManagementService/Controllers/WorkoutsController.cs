@@ -30,7 +30,7 @@ public class WorkoutsController(
     [HttpPost("start")]
     public async Task<ActionResult<WorkoutSessionDto>> Start([FromBody] StartWorkoutRequest request, CancellationToken ct)
     {
-        var error = await startValidator.ToValidationErrorAsync(request, ct);
+        var error = await startValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.StartAsync(User.GetUserId(), request.ProgramId, ct));
@@ -39,7 +39,7 @@ public class WorkoutsController(
     [HttpPost("complete")]
     public async Task<ActionResult<WorkoutSessionDto>> Complete([FromBody] CompleteWorkoutRequest request, CancellationToken ct)
     {
-        var error = await completeValidator.ToValidationErrorAsync(request, ct);
+        var error = await completeValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.CompleteAsync(User.GetUserId(), request.SessionId, request.CaloriesBurned, ct));
@@ -48,7 +48,7 @@ public class WorkoutsController(
     [HttpPost("cancel")]
     public async Task<ActionResult<WorkoutSessionDto>> Cancel([FromBody] CancelWorkoutRequest request, CancellationToken ct)
     {
-        var error = await cancelValidator.ToValidationErrorAsync(request, ct);
+        var error = await cancelValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.CancelAsync(User.GetUserId(), request.SessionId, ct));
@@ -66,7 +66,7 @@ public class WorkoutsController(
     public async Task<ActionResult<WorkoutSetLogDto>> LogSet(
         Guid sessionId, [FromBody] LogSetRequest request, CancellationToken ct)
     {
-        var error = await logSetValidator.ToValidationErrorAsync(request, ct);
+        var error = await logSetValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.LogSetAsync(User.GetUserId(), sessionId, request, ct));
@@ -76,7 +76,7 @@ public class WorkoutsController(
     public async Task<ActionResult<WorkoutSetLogDto>> UpdateSet(
         Guid setLogId, [FromBody] UpdateSetRequest request, CancellationToken ct)
     {
-        var error = await updateSetValidator.ToValidationErrorAsync(request, ct);
+        var error = await updateSetValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await workoutService.UpdateSetAsync(User.GetUserId(), setLogId, request, ct));

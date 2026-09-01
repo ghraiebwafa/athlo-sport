@@ -26,7 +26,7 @@ public class AdminController(
     [HttpPost("admins")]
     public async Task<ActionResult<AdminUserDto>> CreateAdmin([FromBody] CreateAdminRequest request, CancellationToken ct)
     {
-        var error = await createAdminValidator.ToValidationErrorAsync(request, ct);
+        var error = await createAdminValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null)
             return (ActionResult)error;
 

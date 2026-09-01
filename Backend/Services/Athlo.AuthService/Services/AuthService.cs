@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Athlo.Mapper;
 using Athlo.Models.DTOs.Auth;
 using Athlo.Models.Entities;
@@ -29,6 +31,7 @@ public class AuthService(
     IWebHostEnvironment environment,
     IConfiguration configuration,
     LoginAttemptLimiter loginAttemptLimiter,
+    IAccessTokenRevocationService accessTokenRevocation,
     ILogger<AuthService> logger) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = jwtOptions.Value;
@@ -127,7 +130,11 @@ public class AuthService(
         return response;
     }
 
-    public async Task LogoutAsync(Guid userId, string refreshToken, CancellationToken ct = default)
+    public async Task LogoutAsync(
+        Guid userId,
+        string refreshToken,
+        ClaimsPrincipal principal,
+        CancellationToken ct = default)
     {
         var tokenHash = TokenHasher.Hash(refreshToken);
         var stored = await refreshTokenRepository.GetByTokenHashAsync(tokenHash, ct);
@@ -135,8 +142,17 @@ public class AuthService(
         {
             await refreshTokenRepository.RevokeAsync(stored, ct);
             await unitOfWork.SaveChangesAsync(ct);
-            logger.LogInformation("User logged out UserId={UserId}", userId);
         }
+
+        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        var expRaw = principal.FindFirstValue(JwtRegisteredClaimNames.Exp)
+            ?? principal.FindFirstValue("exp");
+        if (jti is not null && expRaw is not null && long.TryParse(expRaw, out var expUnix))
+        {
+            accessTokenRevocation.Revoke(jti, DateTimeOffset.FromUnixTimeSeconds(expUnix));
+        }
+
+        logger.LogInformation("User logged out UserId={UserId}", userId);
     }
 
     public async Task<UserProfileResponse> GetProfileAsync(Guid userId, CancellationToken ct = default)
@@ -239,7 +255,7 @@ public class AuthService(
 
     private async Task<AuthResponse> CreateAuthResponseAsync(User user, CancellationToken ct)
     {
-        var (accessToken, expiresAt) = tokenService.GenerateAccessToken(user);
+        var (accessToken, expiresAt, _) = tokenService.GenerateAccessToken(user);
         var refreshTokenValue = tokenService.GenerateRefreshToken();
 
         var refreshToken = new RefreshToken
