@@ -14,6 +14,7 @@ public class User
     public FitnessGoal FitnessGoal { get; set; }
     public UserRole Role { get; set; } = UserRole.User;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? PreferencesJson { get; set; }
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
     public ICollection<WorkoutSession> WorkoutSessions { get; set; } = [];

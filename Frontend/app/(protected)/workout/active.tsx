@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Activity, ChevronLeft, Flame, Heart, Timer } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -22,7 +22,7 @@ import { WorkoutProgressBar } from '@/components/workout/WorkoutProgressBar';
 import { WorkoutStatChip } from '@/components/workout/WorkoutStatChip';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/constants/theme';
-import { getApiErrorMessage } from '@/lib/api/client';
+import { getApiErrorMessage, isNetworkError, isNotFoundError } from '@/lib/api/client';
 import { getProgram } from '@/lib/api/programs';
 import {
   elapsedSeconds,
@@ -36,6 +36,21 @@ import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet, pauseW
 import { ROUTES } from '@/lib/routes';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
+import {
+  enqueuePendingSet,
+  flushPendingSets,
+  toOptimisticSetLog,
+} from '@/lib/workoutPendingSets';
+import type { WorkoutSession } from '@/lib/types';
+
+type LogSetVariables = {
+  programExerciseId: string;
+  exerciseId: string;
+  exerciseName: string;
+  setNumber: number;
+  repsCompleted: number;
+  weightKg?: number;
+};
 
 const EMPTY_EXERCISES: NonNullable<
   Awaited<ReturnType<typeof getProgram>>['exercises']
@@ -57,6 +72,7 @@ export default function ActiveWorkoutScreen() {
   const resolvedIndexRef = useRef(0);
   const lastSessionIdRef = useRef<string | null>(null);
   const [manualHr, setManualHr] = useState('');
+  const [pendingSyncMessage, setPendingSyncMessage] = useState<string | null>(null);
   const heartRateSource = usePreferencesStore((s) => s.heartRateSource);
   const defaultRestSeconds = usePreferencesStore((s) => s.defaultRestSeconds);
   const betweenExerciseRestSeconds = usePreferencesStore((s) => s.betweenExerciseRestSeconds);
@@ -70,6 +86,7 @@ export default function ActiveWorkoutScreen() {
   const { data: session, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['activeWorkout'],
     queryFn: getActiveWorkout,
+    refetchOnMount: 'always',
   });
 
   const programQuery = useQuery({
@@ -159,18 +176,87 @@ export default function ActiveWorkoutScreen() {
     return () => clearTimeout(timer);
   }, [restRemaining, paused, finishRest]);
 
-  const startRest = (seconds?: number, advanceAfter = false) => {
+  const startRest = useCallback((seconds?: number, advanceAfter = false) => {
     const next = Math.max(1, seconds ?? defaultRestSeconds);
     awaitingNextRef.current = advanceAfter;
     setAwaitingNextExercise(advanceAfter);
     setRestRemaining(next);
-  };
+  }, [defaultRestSeconds]);
 
   const clearRestWithoutAdvance = () => {
     awaitingNextRef.current = false;
     setAwaitingNextExercise(false);
     setRestRemaining(null);
   };
+
+  const handleSessionGone = useCallback(() => {
+    queryClient.setQueryData(['activeWorkout'], null);
+    Alert.alert(
+      'Workout ended',
+      'This session is no longer active. It may have been cleared after 24 hours of inactivity.',
+      [{ text: 'OK', onPress: () => router.replace(ROUTES.home) }]
+    );
+  }, [queryClient]);
+
+  const handleWorkoutMutationError = useCallback(
+    (err: unknown) => {
+      if (isNotFoundError(err)) {
+        handleSessionGone();
+        return;
+      }
+      Alert.alert('Error', getApiErrorMessage(err));
+    },
+    [handleSessionGone]
+  );
+
+  const handleAfterSetLogged = useCallback(
+    (variables: LogSetVariables) => {
+      const exerciseIdx = exercises.findIndex((e) => e.id === variables.programExerciseId);
+      const exercise = exerciseIdx >= 0 ? exercises[exerciseIdx] : undefined;
+      const completedForExercise =
+        loggedSets.filter((s) => s.programExerciseId === variables.programExerciseId && s.completed)
+          .length + 1;
+      const exerciseFinished = exercise ? completedForExercise >= exercise.sets : false;
+
+      if (!exerciseFinished) {
+        startRest();
+        return;
+      }
+
+      const hasNext = exerciseIdx >= 0 && exerciseIdx < exercises.length - 1;
+      if (hasNext) {
+        startRest(betweenExerciseRestSeconds, true);
+      }
+    },
+    [betweenExerciseRestSeconds, exercises, loggedSets, startRest]
+  );
+
+  const syncPendingSets = useCallback(async () => {
+    const active = queryClient.getQueryData<WorkoutSession | null>(['activeWorkout']);
+    if (!active?.id) return;
+
+    const { synced } = await flushPendingSets(active.id, (payload) =>
+      logWorkoutSet(active.id, payload)
+    );
+    if (synced > 0) {
+      await queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
+      await queryClient.invalidateQueries({ queryKey: ['progress'] });
+      setPendingSyncMessage(null);
+    }
+  }, [queryClient]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const hadActive = !!queryClient.getQueryData<WorkoutSession | null>(['activeWorkout']);
+      void refetch().then((result) => {
+        if (hadActive && result.data == null && !result.isError) {
+          handleSessionGone();
+          return;
+        }
+        void syncPendingSets();
+      });
+    }, [refetch, handleSessionGone, queryClient, syncPendingSets])
+  );
 
   const completeMutation = useMutation({
     mutationFn: (calories: number) => completeWorkout(session!.id, calories),
@@ -195,7 +281,7 @@ export default function ActiveWorkoutScreen() {
       });
       router.replace(ROUTES.completeWorkout);
     },
-    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+    onError: (err) => handleWorkoutMutationError(err),
   });
 
   const cancelMutation = useMutation({
@@ -204,7 +290,7 @@ export default function ActiveWorkoutScreen() {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       router.replace(ROUTES.home);
     },
-    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+    onError: (err) => handleWorkoutMutationError(err),
   });
 
   const pauseMutation = useMutation({
@@ -215,38 +301,43 @@ export default function ActiveWorkoutScreen() {
     onSuccess: (data) => {
       queryClient.setQueryData(['activeWorkout'], data);
     },
-    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+    onError: (err) => handleWorkoutMutationError(err),
   });
 
   const logSetMutation = useMutation({
-    mutationFn: (input: {
-      programExerciseId: string;
-      setNumber: number;
-      repsCompleted: number;
-      weightKg?: number;
-    }) => logWorkoutSet(session!.id, input),
+    mutationFn: (input: LogSetVariables) =>
+      logWorkoutSet(session!.id, {
+        programExerciseId: input.programExerciseId,
+        setNumber: input.setNumber,
+        repsCompleted: input.repsCompleted,
+        weightKg: input.weightKg,
+      }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
-
-      const exerciseIdx = exercises.findIndex((e) => e.id === variables.programExerciseId);
-      const exercise = exerciseIdx >= 0 ? exercises[exerciseIdx] : undefined;
-      const completedForExercise =
-        loggedSets.filter((s) => s.programExerciseId === variables.programExerciseId && s.completed)
-          .length + 1;
-      const exerciseFinished = exercise ? completedForExercise >= exercise.sets : false;
-
-      if (!exerciseFinished) {
-        startRest();
+      handleAfterSetLogged(variables);
+    },
+    onError: async (err, variables) => {
+      if (isNetworkError(err) && session) {
+        const pending = await enqueuePendingSet({
+          sessionId: session.id,
+          programExerciseId: variables.programExerciseId,
+          exerciseId: variables.exerciseId,
+          exerciseName: variables.exerciseName,
+          setNumber: variables.setNumber,
+          repsCompleted: variables.repsCompleted,
+          weightKg: variables.weightKg,
+        });
+        queryClient.setQueryData<WorkoutSession | null>(['activeWorkout'], (old) => {
+          if (!old) return old;
+          return { ...old, sets: [...(old.sets ?? []), toOptimisticSetLog(pending)] };
+        });
+        setPendingSyncMessage('Set saved offline. It will sync when you are back online.');
+        handleAfterSetLogged(variables);
         return;
       }
-
-      const hasNext = exerciseIdx >= 0 && exerciseIdx < exercises.length - 1;
-      if (hasNext) {
-        startRest(betweenExerciseRestSeconds, true);
-      }
+      handleWorkoutMutationError(err);
     },
-    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
 
   const updateSetMutation = useMutation({
@@ -263,7 +354,7 @@ export default function ActiveWorkoutScreen() {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
-    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+    onError: (err) => handleWorkoutMutationError(err),
   });
 
   const metrics = useMemo(() => {
@@ -381,6 +472,9 @@ export default function ActiveWorkoutScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.program}>{session.programName}</Text>
+        {pendingSyncMessage ? (
+          <Text style={styles.pendingBanner}>{pendingSyncMessage}</Text>
+        ) : null}
         <Text style={styles.timer}>{formatHms(metrics.elapsed)}</Text>
         <Text style={styles.elapsedLabel}>Elapsed Time{paused ? ' · Paused' : ''}</Text>
 
@@ -460,7 +554,14 @@ export default function ActiveWorkoutScreen() {
                 exercise={exerciseState.current}
                 loggedSets={currentLogs}
                 busy={logSetMutation.isPending || updateSetMutation.isPending}
-                onLogSet={(input) => logSetMutation.mutate(input)}
+                onLogSet={(input) => {
+                  if (!exerciseState.current) return;
+                  logSetMutation.mutate({
+                    ...input,
+                    exerciseId: exerciseState.current.exerciseId,
+                    exerciseName: exerciseState.current.name,
+                  });
+                }}
                 onUpdateSet={(setLogId, input) => updateSetMutation.mutate({ setLogId, ...input })}
               />
             )}
@@ -512,6 +613,13 @@ const styles = StyleSheet.create({
   end: { color: theme.colors.red, fontWeight: '600', fontSize: 16 },
   content: { padding: theme.spacing.md, paddingBottom: 40 },
   program: { color: theme.colors.textMuted, textAlign: 'center', marginBottom: 4 },
+  pendingBanner: {
+    color: theme.colors.orange,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: theme.spacing.sm,
+  },
   timer: {
     color: theme.colors.text,
     fontSize: 48,

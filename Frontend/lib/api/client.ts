@@ -4,7 +4,7 @@ import { refreshAccessTokenLocked } from '@/lib/authRefresh';
 import { config } from '@/lib/config';
 import { getTokens } from '@/stores/authStore';
 
-export { getApiErrorMessage, parseApiError } from '@/lib/api/errors';
+export { getApiErrorMessage, parseApiError, isNetworkError, isNotFoundError } from '@/lib/api/errors';
 export type { ParsedApiError } from '@/lib/api/errors';
 
 export const authApi = axios.create({

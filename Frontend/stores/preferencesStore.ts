@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { DEFAULT_REST_SECONDS } from '@/components/workout/RestTimer';
+import { getUserPreferences, updateUserPreferences } from '@/lib/api/auth';
+import { getTokens } from '@/stores/authStore';
 
 const STORAGE_KEY = 'athlo_user_prefs_v1';
 
@@ -32,6 +34,7 @@ const defaults: UserPreferences = {
 interface PreferencesState extends UserPreferences {
   hydrated: boolean;
   hydrate: () => Promise<void>;
+  syncFromServer: () => Promise<void>;
   setPreference: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => Promise<void>;
 }
 
@@ -45,6 +48,23 @@ function coerceRestPreset(value: unknown, fallback: RestPresetSeconds): RestPres
     : fallback;
 }
 
+function mergePreferences(parsed: Partial<UserPreferences>): UserPreferences {
+  return {
+    ...defaults,
+    ...parsed,
+    defaultRestSeconds: coerceRestPreset(parsed.defaultRestSeconds, defaults.defaultRestSeconds),
+    betweenExerciseRestSeconds: coerceRestPreset(
+      parsed.betweenExerciseRestSeconds,
+      defaults.betweenExerciseRestSeconds
+    ),
+    heartRateSource: parsed.heartRateSource === 'manual' ? 'manual' : 'estimated',
+  };
+}
+
+function applyPreferences(prefs: UserPreferences) {
+  usePreferencesStore.setState({ ...prefs, hydrated: true });
+}
+
 export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   ...defaults,
   hydrated: false,
@@ -53,16 +73,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       const raw = await SecureStore.getItemAsync(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<UserPreferences>;
-        set({
-          ...defaults,
-          ...parsed,
-          defaultRestSeconds: coerceRestPreset(parsed.defaultRestSeconds, defaults.defaultRestSeconds),
-          betweenExerciseRestSeconds: coerceRestPreset(
-            parsed.betweenExerciseRestSeconds,
-            defaults.betweenExerciseRestSeconds
-          ),
-          hydrated: true,
-        });
+        set({ ...mergePreferences(parsed), hydrated: true });
         return;
       }
     } catch {
@@ -70,8 +81,20 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     }
     set({ hydrated: true });
   },
+  syncFromServer: async () => {
+    if (!getTokens()?.accessToken) return;
+
+    try {
+      const remote = await getUserPreferences();
+      const merged = mergePreferences(remote);
+      applyPreferences(merged);
+      await persist(merged);
+    } catch {
+      // keep local preferences when offline or unauthenticated
+    }
+  },
   setPreference: async (key, value) => {
-    const next = {
+    const next = mergePreferences({
       notifyWorkoutReminders: get().notifyWorkoutReminders,
       notifyPrAlerts: get().notifyPrAlerts,
       notifyStreakReminders: get().notifyStreakReminders,
@@ -80,8 +103,16 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       defaultRestSeconds: get().defaultRestSeconds,
       betweenExerciseRestSeconds: get().betweenExerciseRestSeconds,
       [key]: value,
-    } satisfies UserPreferences;
+    });
     set(next);
     await persist(next);
+
+    if (!getTokens()?.accessToken) return;
+
+    try {
+      await updateUserPreferences(next);
+    } catch {
+      // local save still applies; server sync retries on next syncFromServer
+    }
   },
 }));
