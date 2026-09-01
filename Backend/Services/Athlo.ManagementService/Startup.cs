@@ -28,6 +28,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddAthloJwtAuthentication(Configuration);
         services.AddAthloFluentValidation<CreateProgramRequestValidator>();
         services.AddScoped<IProgramService, ProgramService>();
+        services.AddScoped<ISavedProgramService, SavedProgramService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IExerciseService, ExerciseService>();
         services.AddScoped<IWorkoutService, WorkoutService>();

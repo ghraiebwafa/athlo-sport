@@ -6,6 +6,7 @@ namespace Athlo.Repositories.Workouts;
 public interface IWorkoutSessionRepository
 {
     Task<WorkoutSession?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<WorkoutSession?> GetCompletedSessionAsync(Guid userId, Guid sessionId, CancellationToken ct = default);
     Task<WorkoutSession?> GetActiveSessionAsync(Guid userId, CancellationToken ct = default);
     Task<(IReadOnlyList<WorkoutSession> Items, int TotalCount)> GetHistoryPagedAsync(
         Guid userId, int page, int pageSize, CancellationToken ct = default);

@@ -34,6 +34,10 @@ export function programDetail(id: string): Href {
   return `/(protected)/program/${id}` as Href;
 }
 
+export function workoutHistoryDetail(id: string): Href {
+  return `/(protected)/workout/history/${id}` as Href;
+}
+
 export function adminProgramEdit(id: string): Href {
   return `/(protected)/admin/programs/${id}` as Href;
 }

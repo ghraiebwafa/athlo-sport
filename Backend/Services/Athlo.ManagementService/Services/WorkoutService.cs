@@ -257,6 +257,15 @@ public class WorkoutService(
         };
     }
 
+    public async Task<WorkoutSessionDto> GetHistorySessionAsync(
+        Guid userId, Guid sessionId, CancellationToken ct = default)
+    {
+        var session = await sessionRepository.GetCompletedSessionAsync(userId, sessionId, ct)
+            ?? throw new NotFoundException("Workout session not found.");
+
+        return WorkoutMapper.ToDto(session);
+    }
+
     public Task<int> CancelStaleSessionsAsync(TimeSpan maxAge, CancellationToken ct = default)
     {
         var cutoff = DateTime.UtcNow.Subtract(maxAge);

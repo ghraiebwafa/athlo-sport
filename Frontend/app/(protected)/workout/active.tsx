@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CurrentExerciseCard } from '@/components/workout/CurrentExerciseCard';
-import { RestTimer, DEFAULT_REST_SECONDS } from '@/components/workout/RestTimer';
+import { RestTimer } from '@/components/workout/RestTimer';
 import { SetLogger } from '@/components/workout/SetLogger';
 import { UpNextCard } from '@/components/workout/UpNextCard';
 import { WorkoutControls } from '@/components/workout/WorkoutControls';
@@ -32,7 +32,7 @@ import {
   formatHms,
   formatMmSs,
 } from '@/lib/workoutTimer';
-import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet, pauseWorkout, resumeWorkout } from '@/lib/api/workouts';
+import { cancelWorkout, completeWorkout, getActiveWorkout, logWorkoutSet, pauseWorkout, resumeWorkout, updateWorkoutSet } from '@/lib/api/workouts';
 import { ROUTES } from '@/lib/routes';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
@@ -49,15 +49,23 @@ export default function ActiveWorkoutScreen() {
   const queryClient = useQueryClient();
   const setSummary = useWorkoutCompleteStore((s) => s.setSummary);
   const [now, setNow] = useState(() => Date.now());
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+  const [manualExerciseIndex, setManualExerciseIndex] = useState<number | null>(null);
   const [restRemaining, setRestRemaining] = useState<number | null>(null);
-  const [lastRestDuration, setLastRestDuration] = useState(DEFAULT_REST_SECONDS);
   const [awaitingNextExercise, setAwaitingNextExercise] = useState(false);
   const awaitingNextRef = useRef(false);
   const exerciseCountRef = useRef(0);
-  const [indexSessionId, setIndexSessionId] = useState<string | null>(null);
+  const resolvedIndexRef = useRef(0);
+  const lastSessionIdRef = useRef<string | null>(null);
   const [manualHr, setManualHr] = useState('');
   const heartRateSource = usePreferencesStore((s) => s.heartRateSource);
+  const defaultRestSeconds = usePreferencesStore((s) => s.defaultRestSeconds);
+  const betweenExerciseRestSeconds = usePreferencesStore((s) => s.betweenExerciseRestSeconds);
+  const prefsHydrated = usePreferencesStore((s) => s.hydrated);
+  const hydratePrefs = usePreferencesStore((s) => s.hydrate);
+
+  useEffect(() => {
+    if (!prefsHydrated) void hydratePrefs();
+  }, [prefsHydrated, hydratePrefs]);
 
   const { data: session, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['activeWorkout'],
@@ -77,7 +85,8 @@ export default function ActiveWorkoutScreen() {
   const loggedSets = useMemo(() => session?.sets ?? EMPTY_SETS, [session?.sets]);
   const paused = !!(session?.pausedAt || session?.isPaused);
 
-  if (session?.id && exercises.length > 0 && indexSessionId !== session.id) {
+  const resolvedExerciseIndex = useMemo(() => {
+    if (!session?.id || exercises.length === 0) return 0;
     let index = 0;
     for (let i = 0; i < exercises.length; i++) {
       const done = loggedSets.filter(
@@ -89,9 +98,22 @@ export default function ActiveWorkoutScreen() {
       }
       index = i;
     }
-    setExerciseIndex(index);
-    setIndexSessionId(session.id);
-  }
+    return index;
+  }, [session?.id, exercises, loggedSets]);
+
+  useEffect(() => {
+    resolvedIndexRef.current = resolvedExerciseIndex;
+  }, [resolvedExerciseIndex]);
+
+  const exerciseIndex = manualExerciseIndex ?? resolvedExerciseIndex;
+
+  useEffect(() => {
+    if (!session?.id) return;
+    if (lastSessionIdRef.current !== session.id) {
+      lastSessionIdRef.current = session.id;
+      setManualExerciseIndex(null);
+    }
+  }, [session?.id]);
 
   const activeElapsedSeconds = useMemo(() => {
     if (!session) return 0;
@@ -119,7 +141,9 @@ export default function ActiveWorkoutScreen() {
     setAwaitingNextExercise(false);
     setRestRemaining(null);
     if (shouldAdvance) {
-      setExerciseIndex((i) => Math.min(exerciseCountRef.current - 1, i + 1));
+      setManualExerciseIndex(
+        Math.min(exerciseCountRef.current - 1, resolvedIndexRef.current + 1)
+      );
     }
   }, []);
 
@@ -135,11 +159,10 @@ export default function ActiveWorkoutScreen() {
     return () => clearTimeout(timer);
   }, [restRemaining, paused, finishRest]);
 
-  const startRest = (seconds = lastRestDuration, advanceAfter = false) => {
-    const next = Math.max(1, seconds);
+  const startRest = (seconds?: number, advanceAfter = false) => {
+    const next = Math.max(1, seconds ?? defaultRestSeconds);
     awaitingNextRef.current = advanceAfter;
     setAwaitingNextExercise(advanceAfter);
-    setLastRestDuration(next);
     setRestRemaining(next);
   };
 
@@ -220,8 +243,25 @@ export default function ActiveWorkoutScreen() {
 
       const hasNext = exerciseIdx >= 0 && exerciseIdx < exercises.length - 1;
       if (hasNext) {
-        startRest(lastRestDuration, true);
+        startRest(betweenExerciseRestSeconds, true);
       }
+    },
+    onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
+  });
+
+  const updateSetMutation = useMutation({
+    mutationFn: (input: {
+      setLogId: string;
+      repsCompleted: number;
+      weightKg?: number;
+    }) =>
+      updateWorkoutSet(input.setLogId, {
+        repsCompleted: input.repsCompleted,
+        weightKg: input.weightKg,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
     onError: (err) => Alert.alert('Error', getApiErrorMessage(err)),
   });
@@ -419,8 +459,9 @@ export default function ActiveWorkoutScreen() {
                 key={exerciseState.current.id}
                 exercise={exerciseState.current}
                 loggedSets={currentLogs}
-                busy={logSetMutation.isPending}
+                busy={logSetMutation.isPending || updateSetMutation.isPending}
                 onLogSet={(input) => logSetMutation.mutate(input)}
+                onUpdateSet={(setLogId, input) => updateSetMutation.mutate({ setLogId, ...input })}
               />
             )}
             {exercises.length > 1 ? (
@@ -430,7 +471,7 @@ export default function ActiveWorkoutScreen() {
                   variant="secondary"
                   onPress={() => {
                     clearRestWithoutAdvance();
-                    setExerciseIndex((i) => Math.max(0, i - 1));
+                    setManualExerciseIndex(Math.max(0, exerciseIndex - 1));
                   }}
                   disabled={exerciseIndex <= 0}
                 />
@@ -439,7 +480,7 @@ export default function ActiveWorkoutScreen() {
                   variant="secondary"
                   onPress={() => {
                     clearRestWithoutAdvance();
-                    setExerciseIndex((i) => Math.min(exercises.length - 1, i + 1));
+                    setManualExerciseIndex(Math.min(exercises.length - 1, exerciseIndex + 1));
                   }}
                   disabled={exerciseIndex >= exercises.length - 1}
                 />

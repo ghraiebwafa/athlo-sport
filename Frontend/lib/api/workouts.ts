@@ -68,3 +68,8 @@ export async function getWorkoutHistory(page = 1, pageSize = 20) {
   });
   return data;
 }
+
+export async function getWorkoutHistorySession(sessionId: string) {
+  const { data } = await managementApi.get<WorkoutSession>(`/api/workouts/history/${sessionId}`);
+  return data;
+}

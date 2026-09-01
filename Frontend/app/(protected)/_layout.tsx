@@ -11,6 +11,7 @@ export default function ProtectedLayout() {
         <Stack.Screen name="workout/active" />
         <Stack.Screen name="workout/complete" />
         <Stack.Screen name="workout/history" />
+        <Stack.Screen name="workout/history/[id]" />
         <Stack.Screen name="profile/edit" />
         <Stack.Screen name="profile/change-password" />
         <Stack.Screen name="profile/edit-goals" />

@@ -17,6 +17,7 @@ public class AthloDbContext : DbContext
     public DbSet<WorkoutSession> WorkoutSessions => Set<WorkoutSession>();
     public DbSet<WorkoutSetLog> WorkoutSetLogs => Set<WorkoutSetLog>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<SavedProgram> SavedPrograms => Set<SavedProgram>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,7 @@ public class AthloDbContext : DbContext
         ConfigureProgramExercises(modelBuilder);
         ConfigureWorkoutSessions(modelBuilder);
         ConfigureWorkoutSetLogs(modelBuilder);
+        ConfigureSavedPrograms(modelBuilder);
     }
 
     private static void ConfigureUsers(ModelBuilder modelBuilder)
@@ -270,6 +272,29 @@ public class AthloDbContext : DbContext
 
             entity.HasIndex(s => new { s.SessionId, s.ProgramExerciseId, s.SetNumber }).IsUnique();
             entity.HasIndex(s => new { s.ExerciseId, s.Completed });
+        });
+    }
+
+    private static void ConfigureSavedPrograms(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SavedProgram>(entity =>
+        {
+            entity.ToTable("saved_programs");
+
+            entity.HasKey(s => new { s.UserId, s.ProgramId });
+
+            entity.Property(s => s.SavedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.Program)
+                .WithMany()
+                .HasForeignKey(s => s.ProgramId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

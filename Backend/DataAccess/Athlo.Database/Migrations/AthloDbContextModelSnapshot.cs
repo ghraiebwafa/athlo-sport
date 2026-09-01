@@ -366,6 +366,26 @@ namespace Athlo.Database.Migrations
                     b.ToTable("workout_set_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Athlo.Models.Entities.SavedProgram", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SavedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.HasKey("UserId", "ProgramId");
+
+                    b.HasIndex("ProgramId");
+
+                    b.ToTable("saved_programs", (string)null);
+                });
+
             modelBuilder.Entity("Athlo.Models.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("Athlo.Models.Entities.User", "User")
@@ -462,6 +482,25 @@ namespace Athlo.Database.Migrations
                     b.Navigation("ProgramExercise");
 
                     b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Athlo.Models.Entities.SavedProgram", b =>
+                {
+                    b.HasOne("Athlo.Models.Entities.WorkoutProgram", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Athlo.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Program");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Athlo.Models.Entities.Category", b =>

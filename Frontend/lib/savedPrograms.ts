@@ -1,26 +1,31 @@
-import { getItem, setItem } from '@/lib/storage';
-
-const KEY = 'athlo_saved_programs';
+import {
+  getSavedProgramStatus,
+  getSavedPrograms,
+  saveProgram,
+  unsaveProgram,
+} from '@/lib/api/programs';
+import type { ProgramListItem } from '@/lib/types';
 
 export async function getSavedProgramIds(): Promise<string[]> {
-  const raw = await getItem(KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as string[];
-  } catch {
-    return [];
-  }
+  const programs = await getSavedPrograms();
+  return programs.map((p) => p.id);
+}
+
+export async function listSavedPrograms(): Promise<ProgramListItem[]> {
+  return getSavedPrograms();
 }
 
 export async function isProgramSaved(id: string): Promise<boolean> {
-  const ids = await getSavedProgramIds();
-  return ids.includes(id);
+  const status = await getSavedProgramStatus(id);
+  return status.saved;
 }
 
 export async function toggleSavedProgram(id: string): Promise<boolean> {
-  const ids = await getSavedProgramIds();
-  const exists = ids.includes(id);
-  const next = exists ? ids.filter((x) => x !== id) : [...ids, id];
-  await setItem(KEY, JSON.stringify(next));
-  return !exists;
+  const status = await getSavedProgramStatus(id);
+  if (status.saved) {
+    await unsaveProgram(id);
+    return false;
+  }
+  await saveProgram(id);
+  return true;
 }
