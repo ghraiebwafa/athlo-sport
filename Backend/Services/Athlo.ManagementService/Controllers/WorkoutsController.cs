@@ -82,6 +82,10 @@ public class WorkoutsController(
         return Ok(await workoutService.UpdateSetAsync(User.GetUserId(), setLogId, request, ct));
     }
 
+    [HttpGet("history/{sessionId:guid}")]
+    public async Task<ActionResult<WorkoutSessionDto>> GetHistorySession(Guid sessionId, CancellationToken ct) =>
+        Ok(await workoutService.GetHistorySessionAsync(User.GetUserId(), sessionId, ct));
+
     [HttpGet("history")]
     public async Task<ActionResult<PagedResult<WorkoutSessionDto>>> GetHistory(
         [FromQuery] int page = 1,

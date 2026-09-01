@@ -1,49 +1,38 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { PopularWorkoutRow } from '@/components/programs/PopularWorkoutRow';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
-import { getPrograms } from '@/lib/api/programs';
-import { getSavedProgramIds } from '@/lib/savedPrograms';
+import { listSavedPrograms } from '@/lib/savedPrograms';
 import { ROUTES } from '@/lib/routes';
 import type { ProgramListItem } from '@/lib/types';
 
 export default function SavedProgramsScreen() {
-  const programsQuery = useQuery({ queryKey: ['programs'], queryFn: getPrograms });
-  const savedQuery = useQuery({ queryKey: ['savedPrograms'], queryFn: getSavedProgramIds });
-
-  const saved = useMemo(() => {
-    const ids = new Set(savedQuery.data ?? []);
-    return (programsQuery.data ?? []).filter((p) => ids.has(p.id));
-  }, [programsQuery.data, savedQuery.data]);
+  const savedQuery = useQuery({ queryKey: ['savedPrograms'], queryFn: listSavedPrograms });
 
   const renderItem = useCallback(
     ({ item }: { item: ProgramListItem }) => <PopularWorkoutRow program={item} />,
     []
   );
 
-  const isLoading = programsQuery.isLoading || savedQuery.isLoading;
-  const isError = programsQuery.isError || savedQuery.isError;
+  const saved = savedQuery.data ?? [];
 
   return (
     <View style={styles.screen}>
       <ScreenHeader title="Saved Programs" onBack={() => router.back()} />
 
-      {isLoading ? (
+      {savedQuery.isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={theme.colors.primary} size="large" />
         </View>
-      ) : isError ? (
+      ) : savedQuery.isError ? (
         <QueryState
-          message={getApiErrorMessage(programsQuery.error ?? savedQuery.error)}
-          onRetry={() => {
-            void programsQuery.refetch();
-            void savedQuery.refetch();
-          }}
+          message={getApiErrorMessage(savedQuery.error)}
+          onRetry={() => void savedQuery.refetch()}
         />
       ) : saved.length === 0 ? (
         <QueryState

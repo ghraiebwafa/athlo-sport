@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -13,9 +14,10 @@ import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { getWorkoutHistory } from '@/lib/api/workouts';
+import { workoutHistoryDetail } from '@/lib/routes';
 import type { WorkoutSession } from '@/lib/types';
 
-function HistoryRow({ item }: { item: WorkoutSession }) {
+function HistoryRow({ item, onPress }: { item: WorkoutSession; onPress: () => void }) {
   const date = item.completedAt
     ? new Date(item.completedAt).toLocaleDateString(undefined, {
         weekday: 'short',
@@ -25,7 +27,12 @@ function HistoryRow({ item }: { item: WorkoutSession }) {
     : '—';
 
   return (
-    <View style={styles.row} accessibilityRole="summary">
+    <Pressable
+      style={styles.row}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.programName}, ${date}`}
+    >
       <View style={styles.rowInfo}>
         <Text style={styles.rowTitle}>{item.programName}</Text>
         <Text style={styles.rowMeta}>
@@ -36,7 +43,7 @@ function HistoryRow({ item }: { item: WorkoutSession }) {
       <Text style={styles.rowCal}>
         {item.caloriesBurned != null ? `${item.caloriesBurned} cal` : '—'}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -52,7 +59,9 @@ export default function WorkoutHistoryScreen() {
   const items = historyQuery.data?.pages.flatMap((p) => p.items) ?? [];
 
   const renderItem = useCallback(
-    ({ item }: { item: WorkoutSession }) => <HistoryRow item={item} />,
+    ({ item }: { item: WorkoutSession }) => (
+      <HistoryRow item={item} onPress={() => router.push(workoutHistoryDetail(item.id))} />
+    ),
     []
   );
 

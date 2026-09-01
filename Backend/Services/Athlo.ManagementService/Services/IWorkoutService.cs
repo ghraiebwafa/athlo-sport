@@ -13,5 +13,6 @@ public interface IWorkoutService
     Task<WorkoutSetLogDto> LogSetAsync(Guid userId, Guid sessionId, LogSetRequest request, CancellationToken ct = default);
     Task<WorkoutSetLogDto> UpdateSetAsync(Guid userId, Guid setLogId, UpdateSetRequest request, CancellationToken ct = default);
     Task<PagedResult<WorkoutSessionDto>> GetHistoryAsync(Guid userId, int page, int pageSize, CancellationToken ct = default);
+    Task<WorkoutSessionDto> GetHistorySessionAsync(Guid userId, Guid sessionId, CancellationToken ct = default);
     Task<int> CancelStaleSessionsAsync(TimeSpan maxAge, CancellationToken ct = default);
 }

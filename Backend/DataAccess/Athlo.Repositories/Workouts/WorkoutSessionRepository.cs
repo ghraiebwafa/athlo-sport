@@ -15,6 +15,18 @@ public class WorkoutSessionRepository(AthloDbContext context) : IWorkoutSessionR
                 .ThenInclude(l => l.Exercise)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
+    public Task<WorkoutSession?> GetCompletedSessionAsync(Guid userId, Guid sessionId, CancellationToken ct = default) =>
+        context.WorkoutSessions
+            .AsNoTracking()
+            .Include(s => s.Program)
+            .Include(s => s.SetLogs)
+                .ThenInclude(l => l.Exercise)
+            .FirstOrDefaultAsync(
+                s => s.Id == sessionId
+                     && s.UserId == userId
+                     && s.Status == WorkoutSessionStatus.Completed,
+                ct);
+
     public Task<WorkoutSession?> GetActiveSessionAsync(Guid userId, CancellationToken ct = default) =>
         context.WorkoutSessions
             .Include(s => s.Program)
