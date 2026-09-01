@@ -186,7 +186,11 @@ public class AuthService(
         return UserMapper.ToProfileResponse(user);
     }
 
-    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken ct = default)
+    public async Task ChangePasswordAsync(
+        Guid userId,
+        ChangePasswordRequest request,
+        ClaimsPrincipal principal,
+        CancellationToken ct = default)
     {
         var user = await userRepository.GetByIdAsync(userId, ct)
             ?? throw new NotFoundException("User not found.");
@@ -200,6 +204,14 @@ public class AuthService(
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         await userRepository.UpdateAsync(user, ct);
         await refreshTokenRepository.RevokeAllForUserAsync(userId, ct);
+        accessTokenRevocation.RevokeAllForUser(userId);
+
+        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        var expRaw = principal.FindFirstValue(JwtRegisteredClaimNames.Exp)
+            ?? principal.FindFirstValue("exp");
+        if (jti is not null && expRaw is not null && long.TryParse(expRaw, out var expUnix))
+            accessTokenRevocation.Revoke(jti, DateTimeOffset.FromUnixTimeSeconds(expUnix));
+
         await unitOfWork.SaveChangesAsync(ct);
     }
 

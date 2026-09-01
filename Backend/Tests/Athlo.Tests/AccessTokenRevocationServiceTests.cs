@@ -27,4 +27,31 @@ public class AccessTokenRevocationServiceTests
 
         Assert.False(service.IsRevoked(Guid.NewGuid().ToString()));
     }
+
+    [Fact]
+    public void RevokeAllForUser_InvalidatesTokensIssuedBeforeRevocation()
+    {
+        var cache = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
+        var service = new AccessTokenRevocationService(cache);
+        var userId = Guid.NewGuid();
+        var issuedBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
+
+        service.RevokeAllForUser(userId);
+
+        Assert.True(service.IsRevokedForUser(userId, issuedBefore));
+        Assert.False(service.IsRevokedForUser(userId, DateTimeOffset.UtcNow.AddMinutes(1)));
+    }
+
+    [Fact]
+    public void RevokeAllForUser_RevokesTokenIssuedInSameSecond()
+    {
+        var cache = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
+        var service = new AccessTokenRevocationService(cache);
+        var userId = Guid.NewGuid();
+        var issuedAt = DateTimeOffset.UtcNow;
+
+        service.RevokeAllForUser(userId);
+
+        Assert.True(service.IsRevokedForUser(userId, issuedAt));
+    }
 }

@@ -86,7 +86,7 @@ public class AuthController(
         var error = await changePasswordValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return error;
 
-        await authService.ChangePasswordAsync(User.GetUserId(), request, ct);
+        await authService.ChangePasswordAsync(User.GetUserId(), request, User, ct);
         return NoContent();
     }
 

@@ -94,4 +94,39 @@ public class AuthApiTests(AuthWebApplicationFactory factory)
         });
         Assert.Equal(HttpStatusCode.OK, newLogin.StatusCode);
     }
+
+    [Fact]
+    public async Task ChangePassword_RevokesCurrentAccessToken()
+    {
+        var email = $"pwd_at_{Guid.NewGuid():N}@test.local";
+        const string oldPassword = "Password123";
+        const string newPassword = "NewPassword456";
+
+        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest
+        {
+            FullName = "Access Token User",
+            Email = email,
+            Password = oldPassword,
+            ConfirmPassword = oldPassword,
+            CurrentWeight = 70,
+            GoalWeight = 65,
+            FitnessGoal = FitnessGoal.LoseWeight
+        });
+
+        var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>(TestJsonOptions.Default);
+        var oldAccessToken = auth!.AccessToken;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", oldAccessToken);
+
+        var changeResponse = await _client.PostAsJsonAsync("/api/auth/change-password", new ChangePasswordRequest
+        {
+            CurrentPassword = oldPassword,
+            NewPassword = newPassword,
+            ConfirmNewPassword = newPassword
+        });
+        Assert.Equal(HttpStatusCode.NoContent, changeResponse.StatusCode);
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", oldAccessToken);
+        var profileAfter = await _client.GetAsync("/api/auth/profile");
+        Assert.Equal(HttpStatusCode.Unauthorized, profileAfter.StatusCode);
+    }
 }

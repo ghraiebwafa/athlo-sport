@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { theme } from '@/constants/theme';
 import { changePassword } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/client';
+import { signOutAndRedirect } from '@/lib/authSession';
 import { validatePassword } from '@/lib/validatePassword';
 
 export default function ChangePasswordScreen() {
@@ -23,8 +24,8 @@ export default function ChangePasswordScreen() {
     mutationFn: () =>
       changePassword({ currentPassword, newPassword, confirmNewPassword }),
     onSuccess: () => {
-      Alert.alert('Password updated', 'Use your new password next time you sign in.', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert('Password updated', 'Sign in again with your new password.', [
+        { text: 'OK', onPress: () => void signOutAndRedirect() },
       ]);
     },
     onError: (err) => {

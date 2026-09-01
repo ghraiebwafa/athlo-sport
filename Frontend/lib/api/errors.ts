@@ -102,3 +102,13 @@ export function parseApiError(error: unknown): ParsedApiError {
 export function getApiErrorMessage(error: unknown): string {
   return parseApiError(error).message;
 }
+
+export function isNetworkError(error: unknown): boolean {
+  const code = parseApiError(error).code;
+  return code === 'NETWORK' || code === 'TIMEOUT';
+}
+
+export function isNotFoundError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  return error.response?.status === 404;
+}
