@@ -21,7 +21,7 @@ public class AdminProgramsController(
     [HttpPost]
     public async Task<ActionResult<ProgramDetailDto>> Create([FromBody] CreateProgramRequest request, CancellationToken ct)
     {
-        var error = await createValidator.ToValidationErrorAsync(request, ct);
+        var error = await createValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         var program = await programService.CreateAsync(request, ct);
@@ -31,7 +31,7 @@ public class AdminProgramsController(
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProgramDetailDto>> Update(Guid id, [FromBody] UpdateProgramRequest request, CancellationToken ct)
     {
-        var error = await updateValidator.ToValidationErrorAsync(request, ct);
+        var error = await updateValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await programService.UpdateAsync(id, request, ct));

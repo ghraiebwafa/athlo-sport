@@ -13,11 +13,13 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
 {
     private readonly JwtSettings _settings = jwtOptions.Value;
 
-    public (string AccessToken, DateTime ExpiresAt) GenerateAccessToken(User user)
+    public (string AccessToken, DateTime ExpiresAt, string Jti) GenerateAccessToken(User user)
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpirationMinutes);
+        var jti = Guid.NewGuid().ToString();
         var claims = new[]
         {
+            new Claim(JwtRegisteredClaimNames.Jti, jti),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.FullName),
@@ -34,7 +36,7 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
             expires: expiresAt,
             signingCredentials: credentials);
 
-        return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+        return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt, jti);
     }
 
     public string GenerateRefreshToken()

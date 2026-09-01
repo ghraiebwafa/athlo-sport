@@ -21,7 +21,7 @@ public class AdminCategoriesController(
     [HttpPost]
     public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryRequest request, CancellationToken ct)
     {
-        var error = await createValidator.ToValidationErrorAsync(request, ct);
+        var error = await createValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         var category = await categoryService.CreateAsync(request, ct);
@@ -31,7 +31,7 @@ public class AdminCategoriesController(
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] UpdateCategoryRequest request, CancellationToken ct)
     {
-        var error = await updateValidator.ToValidationErrorAsync(request, ct);
+        var error = await updateValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await categoryService.UpdateAsync(id, request, ct));

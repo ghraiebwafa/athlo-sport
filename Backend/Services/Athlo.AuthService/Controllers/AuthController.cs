@@ -25,7 +25,7 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
-        var error = await registerValidator.ToValidationErrorAsync(request, ct);
+        var error = await registerValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await authService.RegisterAsync(request, ct));
@@ -35,7 +35,7 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var error = await loginValidator.ToValidationErrorAsync(request, ct);
+        var error = await loginValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await authService.LoginAsync(request, ct));
@@ -45,7 +45,7 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshTokenRequest request, CancellationToken ct)
     {
-        var error = await refreshTokenValidator.ToValidationErrorAsync(request, ct);
+        var error = await refreshTokenValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await authService.RefreshAsync(request.RefreshToken, ct));
@@ -55,10 +55,10 @@ public class AuthController(
     [Authorize]
     public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request, CancellationToken ct)
     {
-        var error = await refreshTokenValidator.ToValidationErrorAsync(request, ct);
+        var error = await refreshTokenValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
-        await authService.LogoutAsync(User.GetUserId(), request.RefreshToken, ct);
+        await authService.LogoutAsync(User.GetUserId(), request.RefreshToken, User, ct);
         return NoContent();
     }
 
@@ -73,7 +73,7 @@ public class AuthController(
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
     {
-        var error = await updateProfileValidator.ToValidationErrorAsync(request, ct);
+        var error = await updateProfileValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return error;
 
         return Ok(await authService.UpdateProfileAsync(User.GetUserId(), request, ct));
@@ -83,7 +83,7 @@ public class AuthController(
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
     {
-        var error = await changePasswordValidator.ToValidationErrorAsync(request, ct);
+        var error = await changePasswordValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return error;
 
         await authService.ChangePasswordAsync(User.GetUserId(), request, ct);
@@ -94,7 +94,7 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken ct)
     {
-        var error = await forgotPasswordValidator.ToValidationErrorAsync(request, ct);
+        var error = await forgotPasswordValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await authService.ForgotPasswordAsync(request, ct));
@@ -104,7 +104,7 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken ct)
     {
-        var error = await resetPasswordValidator.ToValidationErrorAsync(request, ct);
+        var error = await resetPasswordValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return error;
 
         await authService.ResetPasswordAsync(request, ct);

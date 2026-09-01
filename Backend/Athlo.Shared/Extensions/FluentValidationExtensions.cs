@@ -16,6 +16,7 @@ public static class FluentValidationExtensions
     public static async Task<IActionResult?> ToValidationErrorAsync<T>(
         this IValidator<T> validator,
         T model,
+        HttpContext httpContext,
         CancellationToken ct = default)
     {
         var result = await validator.ValidateAsync(model, ct);
@@ -33,7 +34,8 @@ public static class FluentValidationExtensions
         var response = ApiErrorFactory.Create(
             ApiErrorCodes.ValidationFailed,
             "One or more validation errors occurred.",
-            details);
+            details,
+            httpContext.TraceIdentifier);
 
         return new JsonResult(response) { StatusCode = StatusCodes.Status400BadRequest };
     }

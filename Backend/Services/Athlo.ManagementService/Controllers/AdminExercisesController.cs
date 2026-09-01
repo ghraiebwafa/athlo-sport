@@ -21,7 +21,7 @@ public class AdminExercisesController(
     [HttpPost]
     public async Task<ActionResult<ExerciseDto>> Create([FromBody] CreateExerciseRequest request, CancellationToken ct)
     {
-        var error = await createValidator.ToValidationErrorAsync(request, ct);
+        var error = await createValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         var exercise = await exerciseService.CreateAsync(request, ct);
@@ -31,7 +31,7 @@ public class AdminExercisesController(
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ExerciseDto>> Update(Guid id, [FromBody] UpdateExerciseRequest request, CancellationToken ct)
     {
-        var error = await updateValidator.ToValidationErrorAsync(request, ct);
+        var error = await updateValidator.ToValidationErrorAsync(request, HttpContext, ct);
         if (error is not null) return (ActionResult)error;
 
         return Ok(await exerciseService.UpdateAsync(id, request, ct));
