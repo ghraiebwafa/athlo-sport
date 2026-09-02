@@ -2,5 +2,10 @@
   <PropertyGroup>
     <!-- Pin EF to match installed dotnet-ef tools (9.0.8) -->
     <EntityFrameworkVersion>9.0.8</EntityFrameworkVersion>
+
+    <!-- XML documentation for Swagger and IDE tooltips -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Allow undocumented members; public API surfaces are documented intentionally -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 </Project>

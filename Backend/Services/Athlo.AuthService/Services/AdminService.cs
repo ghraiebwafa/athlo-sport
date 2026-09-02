@@ -7,6 +7,7 @@ using Athlo.Repositories.RefreshTokens;
 using Athlo.Repositories.Users;
 using Athlo.Shared.Enums;
 using Athlo.Shared.Exceptions;
+using Athlo.Shared.Security;
 using Athlo.Shared.Settings;
 using Microsoft.Extensions.Options;
 
@@ -16,6 +17,7 @@ public class AdminService(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IUnitOfWork unitOfWork,
+    IAccessTokenRevocationService accessTokenRevocation,
     IOptions<SuperAdminSettings> superAdminOptions,
     ILogger<AdminService> logger) : IAdminService
 {
@@ -72,6 +74,7 @@ public class AdminService(
         user.Role = UserRole.User;
         await userRepository.UpdateAsync(user, ct);
         await refreshTokenRepository.RevokeAllForUserAsync(user.Id, ct);
+        accessTokenRevocation.RevokeAllForUser(user.Id);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Admin demoted to user AdminId={AdminId} Email={Email}", user.Id, user.Email);

@@ -9,6 +9,7 @@ using Athlo.Repositories;
 using Athlo.Shared.Extensions;
 using Athlo.Shared.Security;
 using Athlo.Shared.Settings;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 
@@ -22,7 +23,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddAthloApiDefaults(Configuration);
-        services.AddAthloSwagger("Athlo Auth API", Environment);
+        services.AddAthloSwagger("Athlo Auth API", Environment, typeof(Program).Assembly);
         services.AddAthloCors(Configuration);
         services.AddAthloForwardedHeaders(Configuration);
         services.AddAthloDistributedCache(Configuration);
@@ -51,6 +52,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
             var context = scope.ServiceProvider.GetRequiredService<AthloDbContext>();
             var superAdminSettings = scope.ServiceProvider.GetRequiredService<IOptions<SuperAdminSettings>>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
+            CachingServiceExtensions.WarnIfUsingInMemoryDistributedCache(Configuration, logger, "Athlo.AuthService");
             await DataSeeder.SeedAsync(context, superAdminSettings, logger);
         }
         catch (Exception ex)

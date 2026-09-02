@@ -37,8 +37,10 @@ import { ROUTES } from '@/lib/routes';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 import { useWorkoutCompleteStore } from '@/stores/workoutCompleteStore';
 import {
+  applyOptimisticSetUpdate,
   enqueuePendingSet,
-  flushPendingSets,
+  enqueuePendingSetUpdate,
+  flushAllPendingWorkoutChanges,
   toOptimisticSetLog,
 } from '@/lib/workoutPendingSets';
 import type { WorkoutSession } from '@/lib/types';
@@ -235,13 +237,20 @@ export default function ActiveWorkoutScreen() {
     const active = queryClient.getQueryData<WorkoutSession | null>(['activeWorkout']);
     if (!active?.id) return;
 
-    const { synced } = await flushPendingSets(active.id, (payload) =>
-      logWorkoutSet(active.id, payload)
-    );
+    const { synced, failed } = await flushAllPendingWorkoutChanges(active.id, {
+      logSet: (payload) => logWorkoutSet(active.id, payload),
+      updateSet: (payload) =>
+        updateWorkoutSet(payload.setLogId, {
+          repsCompleted: payload.repsCompleted,
+          weightKg: payload.weightKg,
+        }),
+    });
     if (synced > 0) {
       await queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       await queryClient.invalidateQueries({ queryKey: ['progress'] });
       setPendingSyncMessage(null);
+    } else if (failed > 0) {
+      setPendingSyncMessage('Some workout changes are waiting to sync.');
     }
   }, [queryClient]);
 
@@ -354,7 +363,23 @@ export default function ActiveWorkoutScreen() {
       queryClient.invalidateQueries({ queryKey: ['activeWorkout'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
-    onError: (err) => handleWorkoutMutationError(err),
+    onError: async (err, variables) => {
+      if (isNetworkError(err) && session) {
+        const pending = await enqueuePendingSetUpdate({
+          sessionId: session.id,
+          setLogId: variables.setLogId,
+          repsCompleted: variables.repsCompleted,
+          weightKg: variables.weightKg,
+        });
+        queryClient.setQueryData<WorkoutSession | null>(['activeWorkout'], (old) => {
+          if (!old) return old;
+          return { ...old, sets: applyOptimisticSetUpdate(old.sets ?? [], pending) };
+        });
+        setPendingSyncMessage('Set update saved offline. It will sync when you are back online.');
+        return;
+      }
+      handleWorkoutMutationError(err);
+    },
   });
 
   const metrics = useMemo(() => {
