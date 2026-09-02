@@ -17,7 +17,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddAthloApiDefaults(Configuration);
-        services.AddAthloSwagger("Athlo Management API", Environment);
+        services.AddAthloSwagger("Athlo Management API", Environment, typeof(Program).Assembly);
         services.AddAthloCors(Configuration);
         services.AddAthloForwardedHeaders(Configuration);
         services.AddAthloDistributedCache(Configuration);
@@ -48,6 +48,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
             using var scope = app.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AthloDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
+            CachingServiceExtensions.WarnIfUsingInMemoryDistributedCache(Configuration, logger, "Athlo.ManagementService");
 
             // AuthService (DataSeeder) owns MigrateAsync to avoid dual-migrator races.
             if (!await context.Database.CanConnectAsync())

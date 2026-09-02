@@ -46,9 +46,17 @@ public class AdminAdminsApiTests(AuthWebApplicationFactory factory)
         });
         Assert.Equal(HttpStatusCode.OK, loginAsAdmin.StatusCode);
 
+        var auth = await loginAsAdmin.Content.ReadFromJsonAsync<AuthResponse>(TestJsonOptions.Default);
+        var adminAccessToken = auth!.AccessToken;
+
         var remove = await client.DeleteAsync($"/api/admin/admins/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, remove.StatusCode);
 
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminAccessToken);
+        var profileAfterDemote = await client.GetAsync("/api/auth/profile");
+        Assert.Equal(HttpStatusCode.Unauthorized, profileAfterDemote.StatusCode);
+
+        await AuthorizeAsSuperAdminAsync(client);
         var listAfter = await client.GetFromJsonAsync<List<AdminUserDto>>("/api/admin/admins", TestJsonOptions.Default);
         Assert.DoesNotContain(listAfter!, a => a.Id == created.Id);
     }
