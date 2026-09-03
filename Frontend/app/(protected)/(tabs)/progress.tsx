@@ -6,10 +6,11 @@ import { FrequencyBarChart } from '@/components/progress/FrequencyBarChart';
 import { MuscleGroupChart } from '@/components/progress/MuscleGroupChart';
 import { OverviewCard } from '@/components/progress/OverviewCard';
 import { TimeRangeFilter } from '@/components/progress/TimeRangeFilter';
+import { WeeklySummaryCard } from '@/components/home/WeeklySummaryCard';
 import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
-import { getProgress } from '@/lib/api/progress';
+import { getProgress, getWeeklySummary } from '@/lib/api/progress';
 import {
   filterRecentWorkouts,
   filterWeeklyFrequency,
@@ -25,6 +26,7 @@ import {
 export default function ProgressScreen() {
   const [range, setRange] = useState<TimeRange>('1M');
   const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ['progress'], queryFn: getProgress });
+  const weeklyQuery = useQuery({ queryKey: ['weeklySummary'], queryFn: getWeeklySummary });
 
   const filtered = useMemo(() => {
     if (!data) return null;
@@ -76,6 +78,8 @@ export default function ProgressScreen() {
       </View>
 
       <TimeRangeFilter value={range} onChange={setRange} />
+
+      {weeklyQuery.data ? <WeeklySummaryCard summary={weeklyQuery.data} /> : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.overviewScroll}>
         <OverviewCard

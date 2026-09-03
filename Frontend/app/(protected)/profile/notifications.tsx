@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { theme } from '@/constants/theme';
+import { enablePushNotifications } from '@/lib/pushNotifications';
 import { usePreferencesStore } from '@/stores/preferencesStore';
 
 export default function NotificationsScreen() {
@@ -19,12 +20,15 @@ export default function NotificationsScreen() {
   }, [hydrated, hydrate]);
 
   const requestPermission = async () => {
-    // Expo Go / web-safe foundation: store intent locally.
-    // Native push (expo-notifications) can be wired when a build/EAS target is ready.
     await setPreference('pushPermissionAsked', true);
+    const token = await enablePushNotifications();
+    if (token) {
+      Alert.alert('Notifications enabled', 'You will receive reminders based on your preferences.');
+      return;
+    }
     Alert.alert(
-      'Notifications ready',
-      'Your preferences are saved on this device. Push delivery will activate when a native build is configured.'
+      'Could not enable push',
+      'Permission was denied, or this build cannot register for push. Your notification preferences are still saved.'
     );
   };
 
@@ -33,7 +37,7 @@ export default function NotificationsScreen() {
       <ScreenHeader title="Notifications" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>
-          Choose what Athlo should remind you about. Preferences are stored securely on this device.
+          Choose what Athlo should remind you about. Preferences sync with your account when you are signed in.
         </Text>
 
         <PrefRow
@@ -57,12 +61,12 @@ export default function NotificationsScreen() {
 
         <Pressable style={styles.cta} onPress={() => void requestPermission()}>
           <Text style={styles.ctaText}>
-            {pushPermissionAsked ? 'Preferences saved' : 'Enable device notifications'}
+            {pushPermissionAsked ? 'Re-enable device notifications' : 'Enable device notifications'}
           </Text>
         </Pressable>
         <Text style={styles.note}>
-          Push transport is prepared for a future native build; toggles already control what you want to
-          receive.
+          On a physical device with a development or production build, Athlo registers an Expo push token with the
+          server so reminders and achievements can reach you.
         </Text>
       </ScrollView>
     </View>

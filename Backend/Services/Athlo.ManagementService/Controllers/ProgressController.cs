@@ -29,4 +29,9 @@ public class ProgressController(IProgressService progressService) : ControllerBa
     {
         return Ok(await progressService.GetProgressAsync(User.GetUserId(), ct));
     }
+
+    /// <summary>Returns this week's training summary for retention surfaces.</summary>
+    [HttpGet("weekly-summary")]
+    public async Task<ActionResult<WeeklySummaryDto>> GetWeeklySummary(CancellationToken ct) =>
+        Ok(await progressService.GetWeeklySummaryAsync(User.GetUserId(), ct));
 }

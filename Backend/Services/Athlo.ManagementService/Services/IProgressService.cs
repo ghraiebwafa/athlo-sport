@@ -15,4 +15,7 @@ public interface IProgressService
     /// <returns>Progress summary including completed workouts and current streak.</returns>
     /// <exception cref="Athlo.Shared.Exceptions.NotFoundException">Thrown when the user does not exist.</exception>
     Task<ProgressResponse> GetProgressAsync(Guid userId, CancellationToken ct = default);
+
+    /// <summary>Returns a short weekly training summary for home / retention surfaces.</summary>
+    Task<WeeklySummaryDto> GetWeeklySummaryAsync(Guid userId, CancellationToken ct = default);
 }

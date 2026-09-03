@@ -5,9 +5,8 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { QueryState } from '@/components/ui/QueryState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { theme } from '@/constants/theme';
+import { getAchievements } from '@/lib/api/achievements';
 import { getApiErrorMessage } from '@/lib/api/client';
-import { getProgress } from '@/lib/api/progress';
-import { buildAchievements } from '@/lib/profileHelpers';
 import { ROUTES } from '@/lib/routes';
 
 const icons: Record<string, LucideIcon> = {
@@ -19,8 +18,8 @@ const icons: Record<string, LucideIcon> = {
 
 export default function AchievementsScreen() {
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['progress'],
-    queryFn: getProgress,
+    queryKey: ['achievements'],
+    queryFn: getAchievements,
   });
 
   if (isLoading) {
@@ -46,20 +45,19 @@ export default function AchievementsScreen() {
     );
   }
 
-  const items = buildAchievements(data);
-  const unlocked = items.filter((a) => a.unlocked).length;
+  const unlocked = data.filter((a) => a.unlocked).length;
 
   return (
     <View style={styles.screen}>
       <ScreenHeader title="Achievements" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.summary}>
-          {unlocked} of {items.length} unlocked
+          {unlocked} of {data.length} unlocked
         </Text>
-        {items.map((item) => {
-          const Icon = icons[item.id] ?? Trophy;
+        {data.map((item) => {
+          const Icon = icons[item.key] ?? Trophy;
           return (
-            <View key={item.id} style={[styles.card, !item.unlocked && styles.cardLocked]}>
+            <View key={item.key} style={[styles.card, !item.unlocked && styles.cardLocked]}>
               <View style={[styles.iconWrap, { borderColor: item.color }]}>
                 <Icon color={item.unlocked ? item.color : theme.colors.textMuted} size={22} />
               </View>

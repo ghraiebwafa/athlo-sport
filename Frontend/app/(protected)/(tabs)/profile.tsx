@@ -29,8 +29,10 @@ import { ROUTES } from '@/lib/routes';
 import { getProfile, logout } from '@/lib/api/auth';
 import { getApiErrorMessage } from '@/lib/api/client';
 import { signOutAndRedirect } from '@/lib/authSession';
+import { getAchievements } from '@/lib/api/achievements';
 import { getProgress } from '@/lib/api/progress';
-import { buildAchievements, buildPersonalRecords } from '@/lib/profileHelpers';
+import { buildPersonalRecords } from '@/lib/profileHelpers';
+import { unregisterStoredPushToken } from '@/lib/pushNotifications';
 import { isAdminRole } from '@/lib/roles';
 import { getTokens, useAuthStore } from '@/stores/authStore';
 
@@ -62,6 +64,12 @@ export default function ProfileScreen() {
     enabled: !!user,
   });
 
+  const achievementsQuery = useQuery({
+    queryKey: ['achievements'],
+    queryFn: getAchievements,
+    enabled: !!user,
+  });
+
   const display = profileQuery.data ?? user;
   const progress = progressQuery.data;
 
@@ -74,6 +82,11 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     const tokens = getTokens();
+    try {
+      await unregisterStoredPushToken();
+    } catch {
+      // continue logout
+    }
     try {
       if (tokens?.refreshToken) await logout(tokens.refreshToken);
     } catch {
@@ -152,7 +165,13 @@ export default function ProfileScreen() {
     );
   }
 
-  const achievements = progress ? buildAchievements(progress) : [];
+  const achievements = (achievementsQuery.data ?? []).map((a) => ({
+    id: a.key,
+    title: a.title,
+    subtitle: a.subtitle,
+    color: a.color,
+    unlocked: a.unlocked,
+  }));
   const records = progress ? buildPersonalRecords(progress) : [];
 
   return (
