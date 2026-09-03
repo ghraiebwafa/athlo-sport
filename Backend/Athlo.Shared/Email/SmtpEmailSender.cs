@@ -18,9 +18,14 @@ public class SmtpEmailSender(IOptions<SmtpSettings> options, ILogger<SmtpEmailSe
         using var message = new MailMessage(from, toEmail)
         {
             Subject = "ATHLO — Reset your password",
-            Body = $"Use this code to reset your ATHLO password:\n\n{resetToken}\n\nIf you did not request this, you can ignore this email.",
-            IsBodyHtml = false
+            Body = EmailTemplates.PasswordReset(resetToken),
+            IsBodyHtml = true
         };
+        message.AlternateViews.Add(
+            AlternateView.CreateAlternateViewFromString(
+                EmailTemplates.PlainPasswordReset(resetToken),
+                null,
+                "text/plain"));
 
         using var client = new SmtpClient(settings.Host, settings.Port)
         {
