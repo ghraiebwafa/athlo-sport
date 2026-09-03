@@ -142,4 +142,17 @@ public interface IAuthService
     /// moment are invalidated via <see cref="Athlo.Shared.Security.IAccessTokenRevocationService.RevokeAllForUser"/>.
     /// </remarks>
     Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Builds a JSON-serializable export of the user's profile, preferences, workouts, and saved programs.
+    /// </summary>
+    Task<UserDataExportDto> ExportDataAsync(Guid userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Permanently deletes the user account and cascaded workout data after password confirmation.
+    /// </summary>
+    /// <remarks>
+    /// Super admin accounts cannot be deleted. All sessions are revoked before deletion.
+    /// </remarks>
+    Task DeleteAccountAsync(Guid userId, DeleteAccountRequest request, ClaimsPrincipal principal, CancellationToken ct = default);
 }

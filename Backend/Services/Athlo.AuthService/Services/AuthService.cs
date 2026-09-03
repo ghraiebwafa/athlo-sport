@@ -5,8 +5,10 @@ using Athlo.Models.DTOs.Auth;
 using Athlo.Models.Entities;
 using Athlo.Repositories;
 using Athlo.Repositories.PasswordResetTokens;
+using Athlo.Repositories.Programs;
 using Athlo.Repositories.RefreshTokens;
 using Athlo.Repositories.Users;
+using Athlo.Repositories.Workouts;
 using Microsoft.AspNetCore.Hosting;
 using System.Security.Cryptography;
 using Athlo.Shared.Enums;
@@ -23,6 +25,8 @@ public class AuthService(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IPasswordResetTokenRepository passwordResetTokenRepository,
+    IWorkoutSessionRepository workoutSessionRepository,
+    ISavedProgramRepository savedProgramRepository,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
     IOptions<JwtSettings> jwtOptions,
@@ -288,6 +292,83 @@ public class AuthService(
         accessTokenRevocation.RevokeAllForUser(stored.UserId);
         await userRepository.UpdateAsync(stored.User, ct);
         await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public async Task<UserDataExportDto> ExportDataAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await userRepository.GetByIdAsync(userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        var sessions = await workoutSessionRepository.GetSessionsForExportAsync(userId, ct);
+        var saved = await savedProgramRepository.GetSavedWithProgramsAsync(userId, ct);
+
+        return new UserDataExportDto
+        {
+            ExportedAt = DateTimeOffset.UtcNow,
+            Profile = UserMapper.ToProfileResponse(user),
+            Preferences = UserPreferencesHelper.Parse(user.PreferencesJson),
+            Workouts = sessions.Select(s => new ExportedWorkoutDto
+            {
+                SessionId = s.Id,
+                ProgramName = s.Program?.Name ?? "Unknown",
+                StartedAt = s.StartedAt,
+                CompletedAt = s.CompletedAt,
+                CaloriesBurned = s.CaloriesBurned,
+                DurationMinutes = s.CompletedAt is null
+                    ? null
+                    : Math.Max(1, (int)Math.Round((s.CompletedAt.Value - s.StartedAt).TotalMinutes
+                        - (s.PausedDurationSeconds / 60.0))),
+                Status = s.Status.ToString(),
+                Sets = s.SetLogs
+                    .OrderBy(l => l.LoggedAt)
+                    .Select(l => new ExportedSetDto
+                    {
+                        ExerciseName = l.Exercise?.Name ?? "Exercise",
+                        SetNumber = l.SetNumber,
+                        RepsCompleted = l.RepsCompleted,
+                        WeightKg = l.WeightKg,
+                        Completed = l.Completed,
+                        LoggedAt = l.LoggedAt
+                    })
+                    .ToList()
+            }).ToList(),
+            SavedPrograms = saved.Select(sp => new ExportedSavedProgramDto
+            {
+                ProgramId = sp.ProgramId,
+                Name = sp.Program?.Name ?? "Program",
+                SavedAt = sp.SavedAt
+            }).ToList()
+        };
+    }
+
+    public async Task DeleteAccountAsync(
+        Guid userId,
+        DeleteAccountRequest request,
+        ClaimsPrincipal principal,
+        CancellationToken ct = default)
+    {
+        var user = await userRepository.GetByIdAsync(userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        if (user.Role == UserRole.SuperAdmin)
+            throw new AppException("The super admin account cannot be deleted.", 403);
+
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            throw new UnauthorizedException("Password is incorrect.");
+
+        await refreshTokenRepository.RevokeAllForUserAsync(userId, ct);
+        accessTokenRevocation.RevokeAllForUser(userId);
+
+        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        var expRaw = principal.FindFirstValue(JwtRegisteredClaimNames.Exp)
+            ?? principal.FindFirstValue("exp");
+        if (jti is not null && expRaw is not null && long.TryParse(expRaw, out var expUnix))
+            accessTokenRevocation.Revoke(jti, DateTimeOffset.FromUnixTimeSeconds(expUnix));
+
+        await userRepository.DeleteAsync(user, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        logger.LogInformation("User account deleted UserId={UserId} Email={Email}", userId, user.Email);
     }
 
     private async Task<AuthResponse> CreateAuthResponseAsync(User user, CancellationToken ct)

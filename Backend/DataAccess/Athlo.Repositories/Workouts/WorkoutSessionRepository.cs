@@ -59,6 +59,16 @@ public class WorkoutSessionRepository(AthloDbContext context) : IWorkoutSessionR
             .OrderByDescending(s => s.CompletedAt)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<WorkoutSession>> GetSessionsForExportAsync(Guid userId, CancellationToken ct = default) =>
+        await context.WorkoutSessions
+            .AsNoTracking()
+            .Include(s => s.Program)
+            .Include(s => s.SetLogs)
+                .ThenInclude(l => l.Exercise)
+            .Where(s => s.UserId == userId)
+            .OrderByDescending(s => s.StartedAt)
+            .ToListAsync(ct);
+
     public async Task<(int TotalCount, int TotalCalories)> GetCompletedAggregatesAsync(Guid userId, CancellationToken ct = default)
     {
         var result = await context.WorkoutSessions
