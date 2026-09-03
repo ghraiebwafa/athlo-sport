@@ -28,6 +28,25 @@ export async function deleteExercise(id: string) {
   await managementApi.delete(`/api/admin/exercises/${id}`);
 }
 
+export async function uploadMedia(uri: string, fileName: string, mimeType: string) {
+  const form = new FormData();
+  form.append('file', {
+    uri,
+    name: fileName,
+    type: mimeType,
+  } as unknown as Blob);
+
+  const { data } = await managementApi.post<{
+    url: string;
+    fileName: string;
+    sizeBytes: number;
+    contentType: string;
+  }>('/api/admin/media', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
 export async function createCategory(payload: { name: string; slug: string; icon: string }) {
   const { data } = await managementApi.post<Category>('/api/admin/categories', payload);
   return data;

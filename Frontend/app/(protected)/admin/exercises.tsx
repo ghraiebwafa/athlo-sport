@@ -20,9 +20,10 @@ import { Input } from '@/components/ui/Input';
 import { QueryState } from '@/components/ui/QueryState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { theme } from '@/constants/theme';
-import { createExercise, deleteExercise, getExercises, updateExercise } from '@/lib/api/admin';
+import { createExercise, deleteExercise, getExercises, updateExercise, uploadMedia } from '@/lib/api/admin';
 import { getApiErrorMessage, parseApiError } from '@/lib/api/client';
 import type { Exercise } from '@/lib/types';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function AdminExercisesScreen() {
   const queryClient = useQueryClient();
@@ -30,6 +31,7 @@ export default function AdminExercisesScreen() {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const query = useQuery({ queryKey: ['exercises'], queryFn: getExercises });
 
@@ -89,6 +91,36 @@ export default function AdminExercisesScreen() {
     ]);
   };
 
+  const pickAndUploadImage = async () => {
+    setError('');
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Allow photo library access to upload an image.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    setUploading(true);
+    try {
+      const uploaded = await uploadMedia(
+        asset.uri,
+        asset.fileName ?? `exercise-${Date.now()}.jpg`,
+        asset.mimeType ?? 'image/jpeg'
+      );
+      setImageUrl(uploaded.url);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <AdminGuard>
       <View style={styles.screen}>
@@ -103,7 +135,11 @@ export default function AdminExercisesScreen() {
         />
 
         {query.isError ? (
-          <QueryState message={getApiErrorMessage(query.error)} onRetry={() => void query.refetch()} />
+          <QueryState
+            variant="error"
+            message={getApiErrorMessage(query.error)}
+            onRetry={() => void query.refetch()}
+          />
         ) : (
           <FlatList
             data={query.data ?? []}
@@ -154,6 +190,13 @@ export default function AdminExercisesScreen() {
                 value={imageUrl}
                 onChangeText={setImageUrl}
                 autoCapitalize="none"
+              />
+              <Button
+                title={uploading ? 'Uploading…' : 'Upload from library'}
+                variant="secondary"
+                onPress={() => void pickAndUploadImage()}
+                loading={uploading}
+                disabled={uploading}
               />
               <FormErrorBanner message={error} />
               <Button
