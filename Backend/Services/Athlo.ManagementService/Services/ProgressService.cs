@@ -52,6 +52,49 @@ public class ProgressService(
         };
     }
 
+    public async Task<WeeklySummaryDto> GetWeeklySummaryAsync(Guid userId, CancellationToken ct = default)
+    {
+        _ = await userRepository.GetByIdAsync(userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        var weekStart = DateOnly.FromDateTime(StartOfWeek(DateTime.UtcNow));
+        var weekEnd = weekStart.AddDays(6);
+        var (sessions, _) = await sessionRepository.GetHistoryPagedAsync(userId, 1, 50, ct);
+        var thisWeek = sessions
+            .Where(s => s.CompletedAt is not null
+                        && DateOnly.FromDateTime(s.CompletedAt.Value) >= weekStart
+                        && DateOnly.FromDateTime(s.CompletedAt.Value) <= weekEnd)
+            .ToList();
+
+        var dates = await sessionRepository.GetCompletedDatesAsync(userId, ct);
+        var streak = StreakCalculator.Calculate(dates);
+        var workouts = thisWeek.Count;
+        var calories = thisWeek.Sum(s => s.CaloriesBurned ?? 0);
+        var minutes = thisWeek.Sum(s =>
+            s.CompletedAt.HasValue
+                ? (int)Math.Round(WorkoutMapper.ActiveDuration(s, s.CompletedAt.Value).TotalMinutes)
+                : 0);
+
+        var headline = workouts switch
+        {
+            0 => "No workouts yet this week — a short session still counts.",
+            1 => "Nice start — one workout logged this week.",
+            >= 4 => "Strong week! You're building real consistency.",
+            _ => $"Solid progress — {workouts} workouts this week."
+        };
+
+        return new WeeklySummaryDto
+        {
+            WeekStart = weekStart,
+            WeekEnd = weekEnd,
+            WorkoutsCompleted = workouts,
+            CaloriesBurned = calories,
+            CurrentStreak = streak,
+            MinutesTrained = minutes,
+            Headline = headline
+        };
+    }
+
     private static DateTime StartOfWeek(DateTime date)
     {
         var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;

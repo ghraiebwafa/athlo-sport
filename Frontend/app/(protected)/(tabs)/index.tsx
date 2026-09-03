@@ -6,6 +6,7 @@ import { TodayWorkoutCard } from '@/components/home/TodayWorkoutCard';
 import { StatTile } from '@/components/home/StatTile';
 import { UpcomingWorkoutRow } from '@/components/home/UpcomingWorkoutRow';
 import { WeeklyGoalCard } from '@/components/home/WeeklyGoalCard';
+import { WeeklySummaryCard } from '@/components/home/WeeklySummaryCard';
 import { QueryState } from '@/components/ui/QueryState';
 import { theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/api/client';
@@ -17,7 +18,7 @@ import {
   workoutsThisWeek,
 } from '@/lib/format';
 import { getPrograms } from '@/lib/api/programs';
-import { getProgress } from '@/lib/api/progress';
+import { getProgress, getWeeklySummary } from '@/lib/api/progress';
 import { getActiveWorkout } from '@/lib/api/workouts';
 import { ROUTES } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
@@ -29,6 +30,11 @@ export default function HomeScreen() {
   const progressQuery = useQuery({
     queryKey: ['progress'],
     queryFn: getProgress,
+    enabled: isAuthenticated,
+  });
+  const weeklyQuery = useQuery({
+    queryKey: ['weeklySummary'],
+    queryFn: getWeeklySummary,
     enabled: isAuthenticated,
   });
   const programsQuery = useQuery({
@@ -130,6 +136,8 @@ export default function HomeScreen() {
       ) : null}
 
       <WeeklyGoalCard completed={weekCount} />
+
+      {weeklyQuery.data ? <WeeklySummaryCard summary={weeklyQuery.data} /> : null}
 
       {upcoming ? (
         <View style={styles.section}>

@@ -14,6 +14,7 @@ public class WorkoutService(
     IWorkoutSessionRepository sessionRepository,
     IProgramRepository programRepository,
     IUnitOfWork unitOfWork,
+    IUserNotificationService notificationService,
     ILogger<WorkoutService> logger) : IWorkoutService
 {
     private const int MaxCaloriesMultiplier = 2;
@@ -90,6 +91,15 @@ public class WorkoutService(
         logger.LogInformation(
             "Workout completed SessionId={SessionId} UserId={UserId} Calories={Calories} PausedSeconds={PausedSeconds}",
             sessionId, userId, caloriesBurned, session.PausedDurationSeconds);
+
+        try
+        {
+            await notificationService.NotifyWorkoutCompletedAsync(userId, sessionId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Post-workout notifications failed SessionId={SessionId}", sessionId);
+        }
 
         return WorkoutMapper.ToDto(session);
     }

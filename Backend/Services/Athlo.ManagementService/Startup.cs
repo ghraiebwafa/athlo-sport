@@ -34,8 +34,25 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IAdminStatsService, AdminStatsService>();
+        services.AddScoped<IAchievementService, AchievementService>();
+        services.AddScoped<IUserNotificationService, UserNotificationService>();
+        services.AddSingleton<LoggingPushNotificationSender>();
+        services.AddHttpClient<ExpoPushNotificationSender>();
+        services.AddScoped<IPushNotificationSender>(sp =>
+        {
+            if (Environment.IsEnvironment("Testing")
+                || !Configuration.GetValue("Push:UseExpo", true))
+            {
+                return sp.GetRequiredService<LoggingPushNotificationSender>();
+            }
+
+            return sp.GetRequiredService<ExpoPushNotificationSender>();
+        });
         if (!Environment.IsEnvironment("Testing"))
+        {
             services.AddAthloStaleWorkoutCleanup();
+            services.AddAthloWorkoutReminders();
+        }
     }
 
     public async Task InitializeAsync(WebApplication app)

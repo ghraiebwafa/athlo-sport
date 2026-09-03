@@ -1,5 +1,7 @@
+using Athlo.Repositories.Achievements;
 using Athlo.Repositories.Categories;
 using Athlo.Repositories.Exercises;
+using Athlo.Repositories.Notifications;
 using Athlo.Repositories.PasswordResetTokens;
 using Athlo.Repositories.Programs;
 using Athlo.Repositories.RefreshTokens;
@@ -22,6 +24,8 @@ public static class DependencyInjection
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IWorkoutSessionRepository, WorkoutSessionRepository>();
+        services.AddScoped<IDevicePushTokenRepository, DevicePushTokenRepository>();
+        services.AddScoped<IUserAchievementRepository, UserAchievementRepository>();
         return services;
     }
 }

@@ -18,6 +18,8 @@ public class AthloDbContext : DbContext
     public DbSet<WorkoutSetLog> WorkoutSetLogs => Set<WorkoutSetLog>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<SavedProgram> SavedPrograms => Set<SavedProgram>();
+    public DbSet<DevicePushToken> DevicePushTokens => Set<DevicePushToken>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +35,8 @@ public class AthloDbContext : DbContext
         ConfigureWorkoutSessions(modelBuilder);
         ConfigureWorkoutSetLogs(modelBuilder);
         ConfigureSavedPrograms(modelBuilder);
+        ConfigureDevicePushTokens(modelBuilder);
+        ConfigureUserAchievements(modelBuilder);
     }
 
     private static void ConfigureUsers(ModelBuilder modelBuilder)
@@ -297,6 +301,40 @@ public class AthloDbContext : DbContext
             entity.HasOne(s => s.Program)
                 .WithMany()
                 .HasForeignKey(s => s.ProgramId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureDevicePushTokens(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DevicePushToken>(entity =>
+        {
+            entity.ToTable("device_push_tokens");
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Token).HasMaxLength(512).IsRequired();
+            entity.Property(t => t.Platform).HasMaxLength(32).IsRequired();
+            entity.Property(t => t.CreatedAt).HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+            entity.Property(t => t.UpdatedAt).HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+            entity.HasIndex(t => t.Token).IsUnique();
+            entity.HasIndex(t => t.UserId);
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureUserAchievements(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserAchievement>(entity =>
+        {
+            entity.ToTable("user_achievements");
+            entity.HasKey(a => new { a.UserId, a.AchievementKey });
+            entity.Property(a => a.AchievementKey).HasMaxLength(64).IsRequired();
+            entity.Property(a => a.UnlockedAt).HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+            entity.HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
