@@ -1,3 +1,5 @@
+using Athlo.Models.Entities;
+
 namespace Athlo.Repositories.Programs;
 
 public interface ISavedProgramRepository
@@ -6,4 +8,5 @@ public interface ISavedProgramRepository
     Task<bool> IsSavedAsync(Guid userId, Guid programId, CancellationToken ct = default);
     Task SaveAsync(Guid userId, Guid programId, CancellationToken ct = default);
     Task<bool> RemoveAsync(Guid userId, Guid programId, CancellationToken ct = default);
+    Task<IReadOnlyList<SavedProgram>> GetSavedWithProgramsAsync(Guid userId, CancellationToken ct = default);
 }

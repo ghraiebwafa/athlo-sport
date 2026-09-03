@@ -80,6 +80,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         app.UseAthloSwagger("Athlo Management API");
         if (!Environment.IsEnvironment("Testing"))
             app.UseRateLimiter();
+        app.UseAthloMediaStaticFiles(Configuration, Environment);
         app.UseAthloDefaults();
         app.MapAthloHealthChecks();
         app.MapControllers();

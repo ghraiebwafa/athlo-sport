@@ -23,7 +23,8 @@ public class AuthController(
     IValidator<ForgotPasswordRequest> forgotPasswordValidator,
     IValidator<ResetPasswordRequest> resetPasswordValidator,
     IValidator<UpdateProfileRequest> updateProfileValidator,
-    IValidator<UserPreferencesDto> preferencesValidator) : ControllerBase
+    IValidator<UserPreferencesDto> preferencesValidator,
+    IValidator<DeleteAccountRequest> deleteAccountValidator) : ControllerBase
 {
     /// <summary>
     /// Registers a new user account.
@@ -238,6 +239,36 @@ public class AuthController(
         if (error is not null) return error;
 
         await authService.ResetPasswordAsync(request, ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Exports the authenticated user's Athlo data (profile, preferences, workouts, saved programs).
+    /// </summary>
+    /// <response code="200">Export payload ready for download.</response>
+    /// <response code="401">Authentication required.</response>
+    [HttpGet("account/export")]
+    [Authorize]
+    public async Task<ActionResult<UserDataExportDto>> ExportAccount(CancellationToken ct) =>
+        Ok(await authService.ExportDataAsync(User.GetUserId(), ct));
+
+    /// <summary>
+    /// Permanently deletes the authenticated user's account after password confirmation.
+    /// </summary>
+    /// <remarks>
+    /// Cascades workout sessions, set logs, saved programs, and tokens. Super admin cannot be deleted.
+    /// </remarks>
+    /// <response code="204">Account deleted.</response>
+    /// <response code="401">Incorrect password or unauthenticated.</response>
+    /// <response code="403">Super admin account.</response>
+    [HttpDelete("account")]
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request, CancellationToken ct)
+    {
+        var error = await deleteAccountValidator.ToValidationErrorAsync(request, HttpContext, ct);
+        if (error is not null) return error;
+
+        await authService.DeleteAccountAsync(User.GetUserId(), request, User, ct);
         return NoContent();
     }
 }

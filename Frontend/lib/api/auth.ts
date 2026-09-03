@@ -79,3 +79,40 @@ export async function updateUserPreferences(preferences: UserPreferencesResponse
   const { data } = await authApi.put<UserPreferencesResponse>('/api/auth/preferences', preferences);
   return data;
 }
+
+export interface UserDataExport {
+  exportedAt: string;
+  profile: UserProfile;
+  preferences: UserPreferencesResponse;
+  workouts: {
+    sessionId: string;
+    programName: string;
+    startedAt: string;
+    completedAt?: string;
+    caloriesBurned?: number;
+    durationMinutes?: number;
+    status: string;
+    sets: {
+      exerciseName: string;
+      setNumber: number;
+      repsCompleted: number;
+      weightKg?: number;
+      completed: boolean;
+      loggedAt: string;
+    }[];
+  }[];
+  savedPrograms: {
+    programId: string;
+    name: string;
+    savedAt: string;
+  }[];
+}
+
+export async function exportAccountData() {
+  const { data } = await authApi.get<UserDataExport>('/api/auth/account/export');
+  return data;
+}
+
+export async function deleteAccount(password: string) {
+  await authApi.delete('/api/auth/account', { data: { password } });
+}

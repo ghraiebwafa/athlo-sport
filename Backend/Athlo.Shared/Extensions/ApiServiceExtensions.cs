@@ -15,6 +15,7 @@ public static class ApiServiceExtensions
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<SuperAdminSettings>(configuration.GetSection(SuperAdminSettings.SectionName));
+        services.Configure<MediaSettings>(configuration.GetSection(MediaSettings.SectionName));
         return services;
     }
 

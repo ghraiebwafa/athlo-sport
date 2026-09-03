@@ -6,6 +6,7 @@ EnvConfiguration.LoadEnvFile();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddAthloLogging("Athlo.AuthService");
+builder.AddAthloSentry("Athlo.AuthService");
 
 builder.Configuration.AddEnvironmentVariables();
 if (!builder.Environment.IsEnvironment("Testing"))

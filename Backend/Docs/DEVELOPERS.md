@@ -105,6 +105,31 @@ dotnet test
 5. Controller action (with XML docs)
 6. Integration test in `Athlo.IntegrationTests`
 
+## Media uploads
+
+Admins can upload exercise/program images via `POST /api/admin/media` (multipart).
+Files are stored under `Media:StoragePath` (default `App_Data/uploads`) and served at `/uploads/{file}`.
+
+Configure:
+
+```
+Media__PublicBaseUrl=http://localhost:5000
+Media__StoragePath=App_Data/uploads
+```
+
+## Account lifecycle
+
+- `GET /api/auth/account/export` — JSON export (profile, preferences, workouts, saved programs)
+- `DELETE /api/auth/account` — permanent delete after password confirmation (super admin blocked)
+
+## Crash reporting
+
+Set `Sentry__Dsn` (or `SENTRY_DSN`) to enable Sentry on Auth and Management. Leave empty to disable.
+
+## Redis
+
+Docker Compose starts Redis by default. Configure `ConnectionStrings__Redis` so JWT revocation and login lockout are shared across instances. Without Redis, a startup warning is logged.
+
 ## XML documentation
 
 - Enabled solution-wide via `Directory.Build.props` (`GenerateDocumentationFile`).

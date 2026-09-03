@@ -40,4 +40,12 @@ public class SavedProgramRepository(AthloDbContext context) : ISavedProgramRepos
         context.SavedPrograms.Remove(row);
         return true;
     }
+
+    public async Task<IReadOnlyList<SavedProgram>> GetSavedWithProgramsAsync(Guid userId, CancellationToken ct = default) =>
+        await context.SavedPrograms
+            .AsNoTracking()
+            .Include(s => s.Program)
+            .Where(s => s.UserId == userId)
+            .OrderByDescending(s => s.SavedAt)
+            .ToListAsync(ct);
 }

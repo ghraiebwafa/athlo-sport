@@ -53,4 +53,10 @@ public class UserRepository(AthloDbContext context) : IUserRepository
         context.Users.Update(user);
         return Task.CompletedTask;
     }
+
+    public Task DeleteAsync(User user, CancellationToken ct = default)
+    {
+        context.Users.Remove(user);
+        return Task.CompletedTask;
+    }
 }

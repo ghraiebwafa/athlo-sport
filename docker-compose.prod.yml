@@ -2,8 +2,13 @@
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
 # Differences from base compose:
-# - PostgreSQL is not exposed on the host (internal network only)
+# - PostgreSQL / Redis stay internal (no host ports)
+# - Ensure .env sets ConnectionStrings__Redis=redis:6379 (compose default)
+# - Optionally set Sentry__Dsn and Media__PublicBaseUrl to your public API host
 
 services:
   postgres:
+    ports: []
+
+  redis:
     ports: []
