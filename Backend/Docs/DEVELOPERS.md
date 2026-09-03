@@ -86,6 +86,14 @@ See `Athlo.Shared.Models.ApiError` and `ExceptionHandlingMiddleware`.
 - JSON blob synced with the mobile app (notifications, HR source, rest timer defaults).
 - `GET/PUT /api/auth/preferences`.
 
+### Retention (push, achievements, weekly summary)
+
+- `POST/DELETE /api/devices/push-token` — register Expo / device tokens.
+- `GET /api/achievements` — catalog + unlock state (unlocked on workout complete).
+- `GET /api/progress/weekly-summary` — Monday–Sunday snapshot for Home.
+- Background `WorkoutReminderService` sends daily reminders when preferences allow.
+- Set `Push:UseExpo=false` to log notifications instead of calling Expo (tests always use logging sender).
+
 ## Testing
 
 ```bash
